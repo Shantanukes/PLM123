@@ -92,9 +92,10 @@ export async function renderMembers(container) {
       const colLower = col.toLowerCase();
 
       if (colLower === 'role' || colLower === 'roleid') {
-        const rMap = { 0: 'None', 1: 'Super Admin', 2: 'Quality Auditor', 3: 'Project Manager', 4: 'COE Head', 5: 'Checker', 6: 'Designer', 7: 'Project Head', 8: 'RnD Head' };
-        const rName = rMap[val] !== undefined ? rMap[val] : String(val).replace(/_/g, ' ');
-        val = (val !== undefined && val !== null) ? `${rName} (${val})` : '-';
+        const rMap = { 0: 'None', 1: 'Super Admin', 2: 'Quality Auditor', 3: 'Project Manager', 4: 'COE Head', 5: 'Checker', 6: 'Designer', 7: 'Project Head', 8: 'R&D Head', 'RnDHead': 'R&D Head', 'SuperAdmin': 'Super Admin' };
+        let rName = rMap[val] !== undefined ? rMap[val] : String(val).replace(/_/g, ' ');
+        rName = typeof rName === 'string' ? rName.replace(/RnD/ig, 'R&D') : rName;
+        val = (val !== undefined && val !== null) ? rName : '-';
       } else if (colLower === 'department' || colLower === 'departmentid') {
         const dMap = {
           1: 'R&D / Engineering', 'R_AND_D_Engineering': 'R&D / Engineering', 'R&D / Engineering': 'R&D / Engineering',
@@ -145,7 +146,7 @@ export async function renderMembers(container) {
     const eId = getVal('employeeId', 'EmployeeId');
 
     const dMapRev = { 'R_AND_D_Engineering': 1, 'Quality': 2, 'SEM': 3, 'Manufacturing': 4, 'IT_Systems': 5 };
-    const rMapRev = { 'None': 0, 'SuperAdmin': 1, 'Super Admin': 1, 'QualityAuditor': 2, 'Quality Auditor': 2, 'ProjectManager': 3, 'Project Manager': 3, 'COEHead': 4, 'COE Head': 4, 'Checker': 5, 'Designer': 6, 'ProjectHead': 7, 'Project Head': 7, 'RnDHead': 8, 'RnD Head': 8 };
+    const rMapRev = { 'None': 0, 'SuperAdmin': 1, 'Super Admin': 1, 'QualityAuditor': 2, 'Quality Auditor': 2, 'ProjectManager': 3, 'Project Manager': 3, 'COEHead': 4, 'COE Head': 4, 'Checker': 5, 'Designer': 6, 'ProjectHead': 7, 'Project Head': 7, 'R&DHead': 8, 'RnDHead': 8 };
 
     let dId = getVal('department', 'Department') || getVal('departmentId', 'DepartmentId') || 1;
     if (typeof dId === 'string' && dMapRev[dId]) dId = dMapRev[dId];

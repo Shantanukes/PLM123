@@ -232,7 +232,7 @@ Employee code (max 50 chars)
 
 1=SuperAdmin, 2=QualityAuditor, 3=ProjectManager, 
 4=COEHead, 5=Checker, 6=Designer, 7=ProjectHead, 
-8=RnDHead 
+8=R&DHead 
 
 1=R&D Engineering, 2=Quality, 3=SEM, 
 4=Manufacturing, 5=IT Systems 
@@ -870,7 +870,7 @@ stage
 string 
 
 Checker, ProjectManager, COEHead, ProjectHead, 
-RnDHead, SupplierFeasibility, Completed 
+RnD Head, SupplierFeasibility, Completed 
 
 assignedUserId / 
 assignedUserName 

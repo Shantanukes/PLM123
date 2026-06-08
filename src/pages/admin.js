@@ -44,7 +44,7 @@ export function renderAdmin(container) {
         <div class="form-group"><label class="form-label">Email Address <span style="color:#DC2626">*</span></label><input class="form-input" id="inv-email" type="email" placeholder="suresh.iyer@kineticgreen.com" /></div>
         <div class="form-group"><label class="form-label">Role / Access Profile</label>
           <select class="form-select" id="inv-role">
-            <option value="0">None</option><option value="8">RnD Head</option><option value="7">Project Head</option><option value="6">Designer</option><option value="5">Checker</option><option value="4">COE Head</option><option value="3">Project Manager</option><option value="2">Quality Auditor</option><option value="1">Super Admin</option>
+            <option value="0">None</option><option value="8">R&D Head</option><option value="7">Project Head</option><option value="6">Designer</option><option value="5">Checker</option><option value="4">COE Head</option><option value="3">Project Manager</option><option value="2">Quality Auditor</option><option value="1">Super Admin</option>
           </select></div>
         <div class="form-group"><label class="form-label">Department</label>
           <select class="form-select" id="inv-dept"><option value="1">R&D / Engineering</option><option value="2">Quality</option><option value="4">Manufacturing</option><option value="3">SEM</option><option value="5">IT / Systems</option></select></div>
@@ -218,9 +218,10 @@ function renderUsers(tc) {
                     </thead>
                     <tbody>
                       ${membersList.map(m => {
-                const rMap = { 0: 'None', 1: 'Super Admin', 2: 'Quality Auditor', 3: 'Project Manager', 4: 'COE Head', 5: 'Checker', 6: 'Designer', 7: 'Project Head', 8: 'RnD Head' };
-                const rName = rMap[m.role] !== undefined ? rMap[m.role] : m.role;
-                const roleDisplay = m.role !== undefined && m.role !== null ? `${rName} (${m.role})` : 'N/A';
+                const rMap = { 0: 'None', 1: 'Super Admin', 2: 'Quality Auditor', 3: 'Project Manager', 4: 'COE Head', 5: 'Checker', 6: 'Designer', 7: 'Project Head', 8: 'R&D Head', 'RnDHead': 'R&D Head', 'SuperAdmin': 'Super Admin' };
+                let rName = rMap[m.role] !== undefined ? rMap[m.role] : String(m.role).replace(/_/g, ' ');
+                rName = typeof rName === 'string' ? rName.replace(/RnD/ig, 'R&D') : rName;
+                const roleDisplay = m.role !== undefined && m.role !== null ? rName : 'N/A';
                 return `
                         <tr style="border-bottom: 1px solid var(--bg-muted);">
                           <td style="padding: 10px;" class="font-medium">${m.userName || 'N/A'}</td>
@@ -254,7 +255,7 @@ function renderUsers(tc) {
                   <select id="new-member-role-id" class="form-input" style="flex: 1; padding: 6px 12px; min-width: 0; min-height: 36px;">
                     <option value="" disabled selected>Select Role</option>
                     <option value="0">None</option>
-                    <option value="8">RnD Head</option>
+                    <option value="8">R&D Head</option>
                     <option value="7">Project Head</option>
                     <option value="6">Designer</option>
                     <option value="5">Checker</option>

@@ -206,7 +206,7 @@ async function renderKanban(tc) {
   });
 
   tc.querySelector('#issue-ecn-btn')?.addEventListener('click', () => {
-    showModal('Issue Engineering Change Notice',
+    showModal('Issue Engineering Change Note',
       `<p style="margin-bottom:16px">Issue ECN for <strong>KG-ECR-2026-0047</strong>?</p>
        <div class="form-group"><label class="form-label">ECN Title</label><input class="form-input" value="BMS PCB Trace Width Upgrade — Thermal Fix for Safar Smart" /></div>
        <div class="form-group"><label class="form-label">Effectivity Type</label><select class="form-select"><option>Serial Number Effectivity (Mandatory — Safety/Recall)</option><option>Date Effectivity</option></select></div>
@@ -261,7 +261,7 @@ async function openECRDetail(id) {
        <button class="btn btn-danger" id="btn-reject-ecr">Reject</button>
        <button class="btn btn-primary" id="btn-approve-ecr">Approve ECR</button>`
     );
-    
+
     setTimeout(() => {
       document.getElementById('btn-reject-ecr')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
@@ -597,7 +597,7 @@ function renderNewECNForm(tc) {
   tc.innerHTML = `
     <div class="card">
       <div class="card-header">
-        <div class="card-title"><span class="material-icons-outlined">edit_note</span>Raise Engineering Change Notice (ECN)</div>
+        <div class="card-title"><span class="material-icons-outlined">edit_note</span>Raise Engineering Change Note (ECN)</div>
       </div>
       <div class="card-body">
         <div class="grid-2" style="gap:20px">

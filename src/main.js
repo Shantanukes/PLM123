@@ -717,7 +717,7 @@ function openProfileModal() {
         <label style="display:block;margin-bottom:4px;font-size:13px;font-weight:600;">Role / Access Profile <span style="color:#DC2626">*</span></label>
         <select class="form-select" id="prof-role" style="width:100%;">
           <option value="0">None</option>
-          <option value="8">RnD Head</option>
+          <option value="8">R&D Head</option>
           <option value="7">Project Head</option>
           <option value="6">Designer</option>
           <option value="5">Checker</option>
