@@ -1,4 +1,5 @@
 import { authFetch } from '../api/client.js';
+import { getCurrentUserRole } from '../main.js';
 
 export async function renderMembers(container) {
   container.innerHTML = `
@@ -81,7 +82,7 @@ export async function renderMembers(container) {
           <thead>
             <tr style="border-bottom: 1px solid var(--border-light);">
               ${columns.map(col => `<th style="padding: 12px 16px; font-weight: 600; color: var(--text-secondary); text-transform: capitalize; white-space: nowrap;">${col.replace(/([A-Z])/g, ' $1').trim()}</th>`).join('')}
-              <th style="padding: 12px 16px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Actions</th>
+              ${!(getCurrentUserRole().toLowerCase() === 'designer' || getCurrentUserRole() === '6') ? `<th style="padding: 12px 16px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Actions</th>` : ''}
             </tr>
           </thead>
           <tbody>
@@ -92,7 +93,7 @@ export async function renderMembers(container) {
       const colLower = col.toLowerCase();
 
       if (colLower === 'role' || colLower === 'roleid') {
-        const rMap = { 0: 'None', 1: 'Super Admin', 2: 'Quality Auditor', 3: 'Project Manager', 4: 'COE Head', 5: 'Checker', 6: 'Designer', 7: 'Project Head', 8: 'R&D Head', 'RnDHead': 'R&D Head', 'SuperAdmin': 'Super Admin' };
+        const rMap = { 0: 'None', 1: 'Super Admin', 2: 'Quality Auditor', 3: 'Project Manager', 4: 'COE Head', 6: 'Designer', 7: 'Project Head', 8: 'R&D Head', 'RnDHead': 'R&D Head', 'SuperAdmin': 'Super Admin' };
         let rName = rMap[val] !== undefined ? rMap[val] : String(val).replace(/_/g, ' ');
         rName = typeof rName === 'string' ? rName.replace(/RnD/ig, 'R&D') : rName;
         val = (val !== undefined && val !== null) ? rName : '-';
@@ -114,11 +115,13 @@ export async function renderMembers(container) {
       }
       return `<td style="padding: 12px 16px; color: var(--text-primary); white-space: nowrap;">${val}</td>`;
     }).join('')}
+                ${!(getCurrentUserRole().toLowerCase() === 'designer' || getCurrentUserRole() === '6') ? `
                 <td style="padding: 12px 16px; white-space: nowrap;">
                   <button class="btn btn-ghost btn-xs edit-member-btn" data-index="${i}" title="Edit Profile" style="color: var(--primary);">
                     <span class="material-icons-outlined" style="font-size: 18px;">edit</span>
                   </button>
                 </td>
+                ` : ''}
               </tr>
             `).join('')}
           </tbody>
@@ -146,7 +149,7 @@ export async function renderMembers(container) {
     const eId = getVal('employeeId', 'EmployeeId');
 
     const dMapRev = { 'R_AND_D_Engineering': 1, 'Quality': 2, 'SEM': 3, 'Manufacturing': 4, 'IT_Systems': 5 };
-    const rMapRev = { 'None': 0, 'SuperAdmin': 1, 'Super Admin': 1, 'QualityAuditor': 2, 'Quality Auditor': 2, 'ProjectManager': 3, 'Project Manager': 3, 'COEHead': 4, 'COE Head': 4, 'Checker': 5, 'Designer': 6, 'ProjectHead': 7, 'Project Head': 7, 'R&DHead': 8, 'RnDHead': 8 };
+    const rMapRev = { 'None': 0, 'SuperAdmin': 1, 'Super Admin': 1, 'QualityAuditor': 2, 'Quality Auditor': 2, 'ProjectManager': 3, 'Project Manager': 3, 'COEHead': 4, 'COE Head': 4, 'Designer': 6, 'ProjectHead': 7, 'Project Head': 7, 'R&DHead': 8, 'RnDHead': 8 };
 
     let dId = getVal('department', 'Department') || getVal('departmentId', 'DepartmentId') || 1;
     if (typeof dId === 'string' && dMapRev[dId]) dId = dMapRev[dId];

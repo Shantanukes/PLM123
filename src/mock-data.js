@@ -53,7 +53,7 @@ const MOCK_WORKFLOW_ATTACHMENTS = {
     },
     {
       id: 'F-100202',
-      name: 'Checker-Comments-BA152002.txt',
+      name: 'Review-Comments-BA152002.txt',
       sizeKb: 14,
       uploadedBy: 'Amit Kumar',
       uploadedAt: '10-Apr-2026, 09:40:00 am'

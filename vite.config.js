@@ -6,7 +6,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://203.16.201.243:5000',
+        target: 'http://203.16.201.251:5000',
         changeOrigin: true,
         secure: false,
       }

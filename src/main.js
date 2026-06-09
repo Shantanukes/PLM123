@@ -81,7 +81,23 @@ const PAGE_DEFINITIONS = [
 const pageRenderers = Object.fromEntries(PAGE_DEFINITIONS.map((page) => [page.id, page.render]));
 const pageLabels = Object.fromEntries(PAGE_DEFINITIONS.map((page) => [page.id, page.label]));
 
+export function getCurrentUserRole() {
+  return String(state.user?.role || '').trim();
+}
+
 function getAllowedPages() {
+  const role = getCurrentUserRole().toLowerCase();
+  
+  if (role === 'designer' || role === '6') {
+    const designerAllowed = [
+      'parts', 'bom', 'documents', 'upload-drawing', 'workflows',
+      'ticket-raise', 'ticket-history', 'change-mgmt', 'reports',
+      'suppliers', 'members', 'part-number'
+    ];
+    return PAGE_DEFINITIONS.map((p) => p.id).filter(id => designerAllowed.includes(id));
+  }
+  
+  // Default to all pages for other roles
   return PAGE_DEFINITIONS.map((page) => page.id);
 }
 
@@ -533,6 +549,17 @@ async function handleLogin(e) {
 export function navigateTo(page, pageData) {
   if (!canAccessPage(page)) {
     showToast(`Access denied for ${state.user.role}`, 'warning');
+    const container = document.getElementById('page-container');
+    if (container) {
+      container.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;text-align:center;">
+          <span class="material-icons-outlined" style="font-size:64px;color:#EF4444;margin-bottom:16px;">gpp_bad</span>
+          <h2>Access Denied</h2>
+          <p class="text-secondary" style="max-width:400px;margin:8px auto 24px;">Your role (<strong>${state.user.role}</strong>) does not have permission to view this page. If you believe this is an error, please contact your administrator.</p>
+          <button class="btn btn-primary" onclick="window.location.href='/'">Return to Home</button>
+        </div>`;
+      container.style.opacity = '1';
+    }
     return;
   }
 
@@ -720,7 +747,6 @@ function openProfileModal() {
           <option value="8">R&D Head</option>
           <option value="7">Project Head</option>
           <option value="6">Designer</option>
-          <option value="5">Checker</option>
           <option value="4">COE Head</option>
           <option value="3">Project Manager</option>
           <option value="2">Quality Auditor</option>

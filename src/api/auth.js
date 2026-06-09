@@ -44,7 +44,7 @@ export function buildUserFromAuth(authPayload, fallbackEmail) {
   return {
     name,
     initials,
-    role: 'Admin/IT Head',
+    role: authPayload.role || tokenPayload?.role || tokenPayload?.userRole || 'Designer',
     email: authPayload.email || tokenPayload?.email || tokenPayload?.upn || fallbackEmail,
   };
 }
