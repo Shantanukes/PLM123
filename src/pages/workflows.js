@@ -1,5 +1,5 @@
 import { showToast, showModal, navigateTo } from '../main.js';
-import { assignWorkflow, fetchWorkflows, fetchCurrentApprovalStage, fetchPendingApprovals, approvePartNumber, rejectPartNumber, approveDrawing, rejectDrawing, authFetch } from '../api/index.js';
+import { assignWorkflow, fetchWorkflows, fetchCurrentApprovalStage, fetchPendingApprovals, approvePartNumber, rejectPartNumber, approveDrawing, rejectDrawing, authFetch, fetchPartApprovalHistory, fetchDesignerTasks } from '../api/index.js';
 
 const RUNTIME_KEY = 'kg_plm_runtime';
 const SESSION_USER_KEY = 'kg_plm_session_user';
@@ -10,6 +10,15 @@ function getCurrentUserName() {
     return sessionUser?.name || 'shantanu';
   } catch {
     return 'shantanu';
+  }
+}
+
+function getCurrentUserRole() {
+  try {
+    const sessionUser = JSON.parse(localStorage.getItem(SESSION_USER_KEY) || '{}');
+    return sessionUser?.role || '';
+  } catch {
+    return '';
   }
 }
 
@@ -245,8 +254,8 @@ export function renderWorkflows(container) {
 async function renderWFTab(tc, tab) {
   if (tab === 'my') await renderMyTasks(tc);
   else if (tab === 'progress') await renderInProgress(tc);
-  else if (tab === 'completed') renderCompleted(tc);
-  else if (tab === 'history') renderHistory(tc);
+  else if (tab === 'completed') await renderCompleted(tc);
+  else if (tab === 'history') await renderHistory(tc);
 }
 
 async function renderMyTasks(tc) {
@@ -272,42 +281,75 @@ async function renderMyTasks(tc) {
     console.error('Failed to load workflows', err);
   }
 
-  // fallback tasks if empty to still show UI design structure
-  // removed dummy tasks
-  const state = getRuntimeState();
-  const feedback = state.rejectionFeedback || [];
+  let designerTasksHtml = '';
+  if (getCurrentUserRole()?.toLowerCase() === 'designer') {
+    let designerTasks = [];
+    try {
+      const apiData = await fetchDesignerTasks();
+      designerTasks = Array.isArray(apiData) ? apiData : (apiData?.items || []);
+    } catch (err) {
+      console.error('Failed to load designer tasks', err);
+    }
+
+    const tableRows = designerTasks.length ? designerTasks.map(t => {
+      const formattedDate = t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A';
+      return `
+        <tr>
+          <td style="font-family:var(--font-mono);font-weight:600;">${t.partNumber || ''}</td>
+          <td><span class="tag">${t.taskType || ''}</span></td>
+          <td style="max-width:280px;white-space:normal;line-height:1.4;">${t.description || ''}</td>
+          <td style="max-width:280px;white-space:normal;line-height:1.4;color:#EF4444;">${t.rejectionComments || ''}</td>
+          <td>${formattedDate}</td>
+          <td>
+            <button class="btn btn-outline btn-xs" onclick="window.location.hash='#/parts/${t.partId}'">View Part</button>
+          </td>
+        </tr>
+      `;
+    }).join('') : '<tr><td colspan="6" class="text-center text-secondary py-4" style="text-align: center;">No designer tasks available</td></tr>';
+
+    designerTasksHtml = `
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header"><div class="card-title">Designer Tasks</div></div>
+        <div class="card-body no-pad">
+          <table class="data-table">
+            <thead><tr><th>Part Number</th><th>Task Type</th><th>Description</th><th>Rejection Comments</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
 
   tc.innerHTML = `
-      <div class="card-header">
-        <div class="card-title"><span class="material-icons-outlined">feedback</span>Rejection Feedback Sent To Creators</div>
-      </div>
-      <div class="card-body" style="padding:12px 16px">
-        ${feedback.length ? feedback.map(f => `<div style="padding:8px 0;border-bottom:1px solid var(--border-light)"><div style="font-size:0.786rem;color:var(--text-tertiary)">${f.time}</div><div style="font-size:0.857rem"><strong>${f.creator}</strong> notified for <strong>${f.taskId}</strong> by ${f.rejectedBy}</div><div style="font-size:0.786rem;color:#991B1B;margin-top:4px">Feedback: ${f.feedback}</div></div>`).join('') : '<div class="text-xs text-secondary">No rejection feedback events yet.</div>'}
-      </div>
-    </div>
-
+    ${designerTasksHtml}
     <div class="card">
       <div class="card-header">
         <div class="card-title">Pending Task Queue</div>
-        <span class="badge badge-priority-high">${tasks.filter(t => t.step !== 'Completed').length} pending</span>
+        <span class="badge badge-priority-high">${tasks.filter(t => t.step !== 'Completed' && t.step !== 'Approved' && t.step !== 'Rejected').length} pending</span>
       </div>
       <div class="card-body no-pad">
         <table class="data-table">
           <thead><tr><th>Workflow ID</th><th>Subject</th><th>Type</th><th>Current Step</th><th>Assignee</th><th>Started</th><th>Part Ref</th><th>Action</th></tr></thead>
           <tbody>
-            ${tasks.length ? tasks.map(t => `
-              <tr style="${t.step === 'Completed' ? 'opacity: 0.7; background: #F9FAFB;' : ''}">
+            ${tasks.length ? tasks.map(t => {
+    const isDone = (t.step === 'Completed' || t.step === 'Approved' || t.step === 'Rejected');
+    const bgColor = (t.step === 'Completed' || t.step === 'Approved') ? '#10B981' : (t.step === 'Rejected' ? '#EF4444' : '#F59E0B');
+    const text = t.step === 'Completed' ? 'Approved' : t.step;
+    return `
+              <tr style="${isDone ? 'opacity: 0.7; background: #F9FAFB;' : ''}">
                 <td style="font-family:var(--font-mono);font-weight:600;">${t.id}</td>
                 <td style="max-width:280px;white-space:normal;line-height:1.4;">${t.subject}</td>
                 <td><span class="tag">${t.type}</span></td>
-                <td><span class="badge" style="background:${t.step === 'Completed' ? '#10B981' : '#F59E0B'}; color:#fff; border:none; padding:4px 8px; border-radius:4px;">${t.step}</span></td>
+                <td><span class="badge" style="background:${bgColor}; color:#fff; border:none; padding:4px 8px; border-radius:4px;">${text}</span></td>
                 <td>${t.assignee}</td>
                 <td>${t.started}</td>
                 <td style="font-family:var(--font-mono); font-size:0.857rem;">${t.ref}</td>
                 <td>
-                  ${(t.type === 'Part' || t.type === 'PartNumber' || t.type?.toLowerCase() === 'drawing') ? `<button class="btn btn-outline btn-xs view-stage-btn" data-id="${t.entityId}" data-type="${t.type}">View Stage</button>` : ''}
+                  ${(t.type === 'Part' || t.type === 'PartNumber' || t.type?.toLowerCase() === 'drawing') && !isDone ? `<button class="btn btn-outline btn-xs view-stage-btn" data-id="${t.entityId}" data-type="${t.type}">View Stage</button>` : ''}
                 </td>
-              </tr>`).join('') : '<tr><td colspan="8" class="text-center text-secondary py-4" style="text-align: center;">No pending tasks</td></tr>'}
+              </tr>`}).join('') : '<tr><td colspan="8" class="text-center text-secondary py-4" style="text-align: center;">No pending tasks</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -412,6 +454,7 @@ async function renderMyTasks(tc) {
       }
     });
   });
+
 }
 
 async function renderInProgress(tc) {
@@ -569,32 +612,119 @@ async function renderInProgress(tc) {
   });
 }
 
-function renderCompleted(tc) {
+async function renderCompleted(tc) {
+  tc.innerHTML = '<div style="padding: 20px; text-align: center;">Loading Completed workflows...</div>';
+  let completedTasks = [];
+  try {
+    const apiData = await fetchWorkflows();
+    const fetchedTasks = Array.isArray(apiData) ? apiData : (apiData?.items || []);
+
+    completedTasks = fetchedTasks.filter(t => t.status === 'Completed' || t.status === 'Approved' || t.status === 'Rejected').map(t => {
+      return {
+        id: t.id ? `WF-${t.id}` : `WF-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        subject: t.title || 'Untitled Task',
+        type: t.entityType || 'Workflow',
+        step: t.status || 'Completed',
+        assignee: t.assignedUserName || t.assignedByUserName || 'System',
+        started: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A',
+        ref: t.entityReference || '-',
+        entityId: t.entityId
+      };
+    });
+  } catch (err) {
+    console.error('Failed to load completed workflows', err);
+  }
+
   tc.innerHTML = `
     <div class="card">
-      <div class="card-header"><div class="card-title">Completed Workflows</div><div class="text-xs text-secondary">Last 30 days · 0 completed</div></div>
+      <div class="card-header"><div class="card-title">Completed Workflows</div><div class="text-xs text-secondary">Last 30 days · ${completedTasks.length} completed</div></div>
       <div class="card-body no-pad">
         <table class="data-table">
-          <thead><tr><th>Workflow ID</th><th>Subject</th><th>Type</th><th>Completed</th><th>Cycle Time</th><th>Result</th></tr></thead>
+          <thead><tr><th>Workflow ID</th><th>Subject</th><th>Type</th><th>Result</th><th>Assignee</th><th>Date</th><th>Part Ref</th></tr></thead>
           <tbody>
-            <tr><td colspan="6" class="text-center text-secondary py-4" style="text-align: center;">No completed workflows</td></tr>
+            ${completedTasks.length ? completedTasks.map(t => {
+    const text = t.step === 'Completed' ? 'Approved' : t.step;
+    const bgColor = (t.step === 'Completed' || t.step === 'Approved') ? '#10B981' : (t.step === 'Rejected' ? '#EF4444' : '#6B7280');
+    return `
+              <tr>
+                <td style="font-family:var(--font-mono);font-weight:600;">${t.id}</td>
+                <td style="max-width:280px;white-space:normal;line-height:1.4;">${t.subject}</td>
+                <td><span class="tag">${t.type}</span></td>
+                <td><span class="badge" style="background:${bgColor}; color:#fff; border:none; padding:4px 8px; border-radius:4px;">${text}</span></td>
+                <td>${t.assignee}</td>
+                <td>${t.started}</td>
+                <td style="font-family:var(--font-mono); font-size:0.857rem;">${t.ref}</td>
+              </tr>
+            `}).join('') : '<tr><td colspan="7" class="text-center text-secondary py-4" style="text-align: center;">No completed workflows</td></tr>'}
           </tbody>
         </table>
       </div>
     </div>`;
 }
 
-function renderHistory(tc) {
+async function renderHistory(tc) {
+  tc.innerHTML = '<div style="padding: 20px; text-align: center;">Loading History...</div>';
+  let historyItems = [];
+  try {
+    const apiData = await fetchWorkflows();
+    const fetchedTasks = Array.isArray(apiData) ? apiData : (apiData?.items || []);
+
+    // Extract unique part IDs
+    const partIds = [...new Set(fetchedTasks.map(t => t.entityId).filter(id => id))];
+
+    // Fetch history for each part concurrently
+    const historyPromises = partIds.map(id => fetchPartApprovalHistory(id).catch(() => []));
+    const historyResults = await Promise.all(historyPromises);
+
+    // Flatten and format the results
+    historyResults.forEach(res => {
+      const items = Array.isArray(res) ? res : (res?.items || []);
+      items.forEach(h => {
+        historyItems.push({
+          id: h.partNumber || `PRT-${h.partId}`,
+          subject: `Approval for ${h.partNumber || h.partId}`,
+          type: h.approvalType || 'Workflow',
+          step: h.stage || 'Unknown',
+          status: h.status || 'Pending',
+          assignee: h.assignedUserName || 'System',
+          date: h.createdAt ? new Date(h.createdAt).toLocaleDateString() : 'N/A',
+          timestamp: h.createdAt ? new Date(h.createdAt).getTime() : 0
+        });
+      });
+    });
+
+    // Sort by date descending
+    historyItems.sort((a, b) => b.timestamp - a.timestamp);
+
+  } catch (err) {
+    console.error('Failed to load workflow history', err);
+  }
+
   tc.innerHTML = `
     <div class="card">
-      <div class="card-header"><div class="card-title">Workflow History</div></div>
+      <div class="card-header"><div class="card-title">Workflow Approval History</div></div>
       <div class="card-body no-pad">
         <table class="data-table">
-          <thead><tr><th>Workflow ID</th><th>Subject</th><th>Type</th><th>Status</th><th>Date</th></tr></thead>
+          <thead><tr><th>Part Number</th><th>Subject</th><th>Approval Type</th><th>Stage</th><th>Status</th><th>Assigned User</th><th>Date</th></tr></thead>
           <tbody>
-            <tr><td colspan="5" class="text-center text-secondary py-4" style="text-align: center;">No history available</td></tr>
+            ${historyItems.length ? historyItems.map(h => {
+    const statusColor = (h.status === 'Approved' || h.status === 'Completed') ? '#10B981' : (h.status === 'Rejected' ? '#EF4444' : '#F59E0B');
+    const text = h.status === 'Completed' ? 'Approved' : h.status;
+    return `
+              <tr>
+                <td style="font-family:var(--font-mono);font-weight:600;">${h.id}</td>
+                <td style="max-width:280px;white-space:normal;line-height:1.4;">${h.subject}</td>
+                <td><span class="tag">${h.type}</span></td>
+                <td>${h.step}</td>
+                <td><span class="badge" style="background:${statusColor}; color:#fff; border:none; padding:4px 8px; border-radius:4px;">${text}</span></td>
+                <td>${h.assignee}</td>
+                <td>${h.date}</td>
+              </tr>
+            `}).join('') : '<tr><td colspan="7" class="text-center text-secondary py-4" style="text-align: center;">No history available</td></tr>'}
           </tbody>
         </table>
       </div>
     </div>`;
 }
+
+

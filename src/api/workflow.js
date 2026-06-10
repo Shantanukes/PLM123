@@ -103,3 +103,19 @@ export async function rejectDrawing(id, payload) {
   const text = await response.text();
   return text ? JSON.parse(text) : null;
 }
+
+export async function fetchPartApprovalHistory(id) {
+  const response = await authFetch(`/api/Parts/${id}/approval-history`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch approval history');
+  }
+  return response.json();
+}
+
+export async function fetchDesignerTasks() {
+  const response = await authFetch(`/api/Parts/designer-tasks`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch designer tasks');
+  }
+  return response.json();
+}
