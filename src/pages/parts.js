@@ -1461,6 +1461,23 @@ function renderCreatePart(tc) {
             <input class="form-input" id="cp-material" placeholder="e.g. CRCA Steel IS:1079 Grade D" />
           </div>
           <div class="form-group">
+            <label class="form-label">GST Code</label>
+            <input class="form-input" id="cp-gstcode" placeholder="e.g. HSN1234" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity</label>
+            <input class="form-input" type="number" id="cp-quantity" value="1" min="1" placeholder="Quantity" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Release Flag <span style="color:#DC2626">*</span></label>
+            <select class="form-select" id="cp-release-flag">
+              <option value="">Select Release Flag</option>
+              <option value="0">EC</option>
+              <option value="1">CD</option>
+              <option value="2">Proto</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Homologation Required</label>
             <select class="form-select" id="cp-homo"><option value="0">No</option><option value="1">Yes</option></select>
           </div>
@@ -1591,9 +1608,11 @@ function renderCreatePart(tc) {
     const revisionLetter = tc.querySelector('#cp-revision')?.value?.trim();
     const devStatusCode = tc.querySelector('#cp-dev-status')?.value?.trim();
     const unitOfMeasure = tc.querySelector('#cp-uom')?.value?.trim();
+    const releaseFlagStr = tc.querySelector('#cp-release-flag')?.value;
 
     if (!name) return showToast('Part name is required.', 'error');
     if (!categoryCode || !modelCode || !groupCode || !subGroupCode) return showToast('Category, model, and group are required.', 'error');
+    if (releaseFlagStr === '' || releaseFlagStr === undefined || releaseFlagStr === null) return showToast('Release Flag is required.', 'error');
 
     const supplierMode = supplierSelect?.value || 'na';
     const supplierName = supplierMode === 'manual' ? (nameInput?.value?.trim() || '') : 'Not Applicable';
@@ -1625,10 +1644,11 @@ function renderCreatePart(tc) {
       makeBuy: Number(tc.querySelector('#cp-makebuy')?.value || 0),
       weight: Number(tc.querySelector('#cp-weight')?.value || 0),
       unitOfMeasure: unitOfMeasure || 'Each',
-      gstCode: '',
+      gstCode: tc.querySelector('#cp-gstcode')?.value?.trim() || '',
       supplierName,
       supplierEmail,
-      quantity: 1,
+      quantity: Number(tc.querySelector('#cp-quantity')?.value || 1),
+      releaseFlag: Number(releaseFlagStr),
       homologationStatus: Number(tc.querySelector('#cp-homo')?.value || 0)
     };
 
