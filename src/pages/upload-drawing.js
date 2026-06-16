@@ -185,12 +185,7 @@ export function renderUploadDrawing(container, prefillPartNumber = '') {
     if (partNumber) formData.append('PartNumber', partNumber);
     if (revision) formData.append('Revision', revision);
     if (fileInput.files?.length) formData.append('file', fileInput.files[0]);
-    // Console log the payload for debugging
-    console.log('--- Upload Drawing Payload ---');
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-    console.log('------------------------------');
+ 
 
     const btn = container.querySelector('#ud-submit');
     try {

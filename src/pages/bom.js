@@ -650,19 +650,14 @@ async function openCreateBomModal() {
       description,
       teamId: Number(teamIdVal) || 0
     };
-    console.log("BOM Payload:", bomPayload);
     const parentIdParsed = Number(parentBOMIdVal);
     if (!isNaN(parentIdParsed) && parentIdParsed > 0) {
       bomPayload.parentBOMId = parentIdParsed;
     }
 
-    console.log('[BOM CREATE] Payload being sent:', JSON.stringify(bomPayload, null, 2));
-
     let backendId = null;
     try {
       const newBomResp = await createBom(bomPayload);
-      
-      console.log('[BOM CREATE] Server response:', newBomResp);
       backendId = Number(newBomResp?.id || newBomResp?.bomId || 0) || null;
       showToast(`BOM ${bomNumber} created on server.`, 'success');
     } catch (e) {
@@ -1917,14 +1912,11 @@ function renderCreatePart(tc) {
       supplierEmail,
     };
 
-    console.log('[PART CREATE] Payload:', JSON.stringify(payload, null, 2));
-
     const submitBtn = tc.querySelector('#cp-submit');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:16px">autorenew</span>Creating…'; }
 
     try {
       const resp = await createPart(payload);
-      console.log('[PART CREATE] Server response:', resp);
       showToast(`Part ${generatedPartNumber} created and submitted for review!`, 'success');
       setTimeout(() => navigateTo('workflows'), 1500);
     } catch (err) {

@@ -1,5 +1,5 @@
 const AUTH_API_BASE_URL_KEY = 'kg_plm_auth_api_base_url';
-const DEFAULT_API_BASE_URL = 'http://203.16.201.251:5000';
+const DEFAULT_API_BASE_URL = 'http://203.16.202.205:5000';
 const AUTH_ACCESS_TOKEN_KEY = 'kg_plm_access_token';
 
 export function normalizeApiBaseUrl(url) {

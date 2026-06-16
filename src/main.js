@@ -1,5 +1,6 @@
 import './styles.css';
 import './enterprise-theme.css';
+import { authFetch } from './api/client.js';
 import {
   buildUserFromAuth,
   clearAuthTokens,
@@ -105,7 +106,6 @@ function canAccessPage(page) {
   return getAllowedPages().includes(page);
 }
 
-const LOGIN_ROLE_PROFILES = {};
 
 const FORGOT_ENDPOINT_CANDIDATES = [
   '/api/Auth/forgot-password',
@@ -372,14 +372,7 @@ function applyRoleAccessUI() {
   });
 }
 
-function syncLoginFieldsByRole() {
-  const selectedRole = document.getElementById('login-role')?.value || 'Designer';
-  const profile = LOGIN_ROLE_PROFILES[selectedRole];
-  if (!profile) return;
-  const emailEl = document.getElementById('login-email');
-  if (emailEl) emailEl.value = profile.email;
 
-}
 
 // ─── Init ───
 function init() {
@@ -431,7 +424,7 @@ function init() {
 
   const loginForm = document.getElementById('login-form');
   loginForm?.addEventListener('submit', handleLogin);
-  document.getElementById('login-role')?.addEventListener('change', syncLoginFieldsByRole);
+
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => navigateTo(item.dataset.page));
   });
@@ -446,7 +439,6 @@ function init() {
     if (e.key === 'Enter') handleGlobalSearch(searchEl.value);
   });
 
-  syncLoginFieldsByRole();
   bindLoginAuxiliaryActions();
   initCommandPalette();
   initNextGenInteractions();

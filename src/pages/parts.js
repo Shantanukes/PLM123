@@ -459,12 +459,9 @@ async function openCreateBomModal() {
       parentBOMId: 0,
     };
 
-    console.log('[BOM CREATE] Payload being sent:', JSON.stringify(bomPayload, null, 2));
-
     let backendId = null;
     try {
       const newBomResp = await createBom(bomPayload);
-      console.log('[BOM CREATE] Server response:', newBomResp);
       backendId = Number(newBomResp?.id || newBomResp?.bomId || 0) || null;
       showToast(`BOM ${bomNumber} created on server.`, 'success');
     } catch (e) {
@@ -1730,14 +1727,11 @@ function renderCreatePart(tc) {
       homologationStatus: Number(tc.querySelector('#cp-homo')?.value || 0)
     };
 
-    console.log('[PART CREATE] Payload:', JSON.stringify(payload, null, 2));
-
     const submitBtn = tc.querySelector('#cp-submit');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:16px">autorenew</span>Creating…'; }
 
     try {
       const resp = await createPart(payload);
-      console.log('[PART CREATE] Server response:', resp);
 
       const targetBomId = tc.querySelector('#cp-bom-ref')?.value?.trim();
       if (targetBomId) {
