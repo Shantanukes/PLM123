@@ -1393,17 +1393,7 @@ async function renderCreatePart(tc) {
             <input class="form-input" id="cp-name" placeholder="e.g. BLDC HUB MOTOR 250W 48V" maxlength="60" />
             <div class="text-xs text-secondary" style="margin-top:4px">Uppercase only. Max 60 characters.</div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Classification <span style="color:#DC2626">*</span></label>
-            <select class="form-select" id="cp-cls">
-              <option>Assembly</option>
-              <option>Mechanical/Electrical</option>
-              <option>Electronic</option>
-              <option>Software (SW)</option>
-              <option>Electrical</option>
-              <option>Hardware</option>
-            </select>
-          </div>
+
           <div class="form-group">
             <label class="form-label">Make / Buy <span style="color:#DC2626">*</span></label>
             <select class="form-select" id="cp-makebuy">
@@ -1427,10 +1417,7 @@ async function renderCreatePart(tc) {
             <label class="form-label">Weight (kg)</label>
             <input class="form-input" id="cp-weight" type="number" step="0.001" placeholder="0.000" />
           </div>
-          <div class="form-group">
-            <label class="form-label">Material / Grade</label>
-            <input class="form-input" id="cp-material" placeholder="e.g. CRCA Steel IS:1079 Grade D" />
-          </div>
+
           <div class="form-group">
             <label class="form-label">GST Code</label>
             <input class="form-input" id="cp-gstcode" placeholder="e.g. HSN1234" />

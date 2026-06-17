@@ -482,6 +482,11 @@ async function renderMyTasks(tc) {
                    <input type="checkbox" id="stage-revert-designer" />
                    <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer (for Reject only)</label>
                  </div>
+                 ${(data.role || '').toLowerCase().replace(/\s/g, '') === 'coehead' ? `
+                 <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                   <input type="checkbox" id="stage-revert-pm" />
+                   <label for="stage-revert-pm" style="font-size: 13px;">Revert through PM (for Reject only)</label>
+                 </div>` : ''}
                ` : ''}
              </div>`,
             `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
@@ -517,14 +522,15 @@ async function renderMyTasks(tc) {
             overlay.querySelector('#reject-stage-btn')?.addEventListener('click', async (btnEv) => {
               const comments = overlay.querySelector('#stage-comments')?.value?.trim() || '';
               const revertToDesigner = overlay.querySelector('#stage-revert-designer')?.checked || false;
+              const revertThroughPM = overlay.querySelector('#stage-revert-pm')?.checked || false;
               const btn = btnEv.currentTarget;
               btn.disabled = true;
               btn.textContent = 'Rejecting...';
               try {
                 if (resolvedType === 'PartNumber') {
-                  await rejectPartNumber(entityId, { comments, revertToDesigner });
+                  await rejectPartNumber(entityId, { comments, revertToDesigner, revertThroughPM, selectedPMId: 0 });
                 } else {
-                  await rejectDrawing(entityId, { comments, revertToDesigner });
+                  await rejectDrawing(entityId, { comments, revertToDesigner, revertThroughPM, selectedPMId: 0 });
                 }
                 showToast('Rejected successfully', 'success');
                 overlay.remove();
@@ -647,6 +653,11 @@ async function renderInProgress(tc) {
                    <input type="checkbox" id="stage-revert-designer" />
                    <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer (for Reject only)</label>
                  </div>
+                 ${(data.role || '').toLowerCase().replace(/\s/g, '') === 'coehead' ? `
+                 <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                   <input type="checkbox" id="stage-revert-pm" />
+                   <label for="stage-revert-pm" style="font-size: 13px;">Revert through PM (for Reject only)</label>
+                 </div>` : ''}
                ` : ''}
              </div>`,
             `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
@@ -682,14 +693,15 @@ async function renderInProgress(tc) {
             overlay.querySelector('#reject-stage-btn')?.addEventListener('click', async (btnEv) => {
               const comments = overlay.querySelector('#stage-comments')?.value?.trim() || '';
               const revertToDesigner = overlay.querySelector('#stage-revert-designer')?.checked || false;
+              const revertThroughPM = overlay.querySelector('#stage-revert-pm')?.checked || false;
               const btn = btnEv.currentTarget;
               btn.disabled = true;
               btn.textContent = 'Rejecting...';
               try {
                 if (resolvedType === 'PartNumber') {
-                  await rejectPartNumber(entityId, { comments, revertToDesigner });
+                  await rejectPartNumber(entityId, { comments, revertToDesigner, revertThroughPM, selectedPMId: 0 });
                 } else {
-                  await rejectDrawing(entityId, { comments, revertToDesigner });
+                  await rejectDrawing(entityId, { comments, revertToDesigner, revertThroughPM, selectedPMId: 0 });
                 }
                 showToast('Rejected successfully', 'success');
                 overlay.remove();

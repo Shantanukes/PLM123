@@ -212,6 +212,7 @@ export function renderBOM(container) {
       <button class="tab-btn" data-tab="team-boms">Team BOMs</button>
       <button class="tab-btn" data-tab="bom-parts">BOM Parts</button>
       <button class="tab-btn" data-tab="bom-compare">BOM Compare</button>
+      <button class="tab-btn" data-tab="part-linking">Part linking</button>
     </div>
 
     <div id="tab-content"></div>
@@ -250,6 +251,18 @@ function renderTabContent(tc, tab) {
   else if (tab === 'team-boms') renderTeamBoms(tc);
   else if (tab === 'bom-parts') renderBomParts(tc);
   else if (tab === 'bom-compare') renderBomCompare(tc);
+  else if (tab === 'part-linking') renderPartLinking(tc);
+}
+
+// ─── Part Linking ───────────────────────────────────────────────
+async function renderPartLinking(tc) {
+  tc.innerHTML = `
+    <div class="card">
+      <div class="card-body">
+        <h3 style="margin-bottom:12px;">Part Linking</h3>
+        <p class="text-secondary">Link individual parts across BOMs or components here. (Under construction)</p>
+      </div>
+    </div>`;
 }
 
 // ─── Team BOMs ───────────────────────────────────────────────
@@ -1690,17 +1703,7 @@ async function renderCreatePart(tc) {
             <input class="form-input" id="cp-name" placeholder="e.g. BLDC HUB MOTOR 250W 48V" maxlength="60" />
             <div class="text-xs text-secondary" style="margin-top:4px">Uppercase only. Max 60 characters.</div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Classification <span style="color:#DC2626">*</span></label>
-            <select class="form-select" id="cp-cls">
-              <option>Assembly</option>
-              <option>Mechanical/Electrical</option>
-              <option>Electronic</option>
-              <option>Software (SW)</option>
-              <option>Electrical</option>
-              <option>Hardware</option>
-            </select>
-          </div>
+
           <div class="form-group">
             <label class="form-label">Make / Buy <span style="color:#DC2626">*</span></label>
             <select class="form-select" id="cp-makebuy">
@@ -1724,10 +1727,7 @@ async function renderCreatePart(tc) {
             <label class="form-label">Weight (kg)</label>
             <input class="form-input" id="cp-weight" type="number" step="0.001" placeholder="0.000" />
           </div>
-          <div class="form-group">
-            <label class="form-label">Material / Grade</label>
-            <input class="form-input" id="cp-material" placeholder="e.g. CRCA Steel IS:1079 Grade D" />
-          </div>
+
           <div class="form-group">
             <label class="form-label">Homologation Required</label>
             <select class="form-select" id="cp-homo"><option value="0">No</option><option value="1">Yes</option></select>
@@ -1886,7 +1886,6 @@ async function renderCreatePart(tc) {
       weight: Number(tc.querySelector('#cp-weight')?.value || 0),
       unitOfMeasure,
       gstCode: '',
-      material: tc.querySelector('#cp-material')?.value?.trim() || '',
       homologation: Number(tc.querySelector('#cp-homo')?.value || 0),
       supplierName,
       supplierEmail,
