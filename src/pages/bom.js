@@ -617,21 +617,18 @@ export async function openCreateBomModal(prefill = {}) {
 
     // ── Payload shaped to exactly match the API contract ────
     const bomPayload = {
-      categoryCode,
-      modelCode,
-      groupCode,
-      subGroupCode,
-      revisionLetter,
-      assemblyStatus: devStatusCode,   // API expects Development Status (X/Y/Z/S)
+      categoryCode: categoryCode || '',
+      modelCode: modelCode || '',
+      groupCode: groupCode || '',
+      subGroupCode: subGroupCode || '',
+      revisionLetter: revisionLetter || '',
+      assemblyStatus: devStatusCode || '',
       name: document.getElementById('bom-name')?.value?.trim() || bomNumber,
       description: document.getElementById('bom-description')?.value?.trim() || '',
       teamId: Number(teamIdVal) || 0,
-      vehicleModelId: Number(document.getElementById('bom-vehicle-model-id')?.value) || 0,
+      parentBOMId: Number(parentBOMIdVal) || 0,
+      vehicleModelId: Number(document.getElementById('bom-vehicle-model-id')?.value) || 0
     };
-    const parentIdParsed = Number(parentBOMIdVal);
-    if (!isNaN(parentIdParsed) && parentIdParsed > 0) {
-      bomPayload.parentBOMId = parentIdParsed;
-    }
     console.log('[BOM CREATE] Sending payload:', JSON.stringify(bomPayload, null, 2));
 
     let backendId = null;

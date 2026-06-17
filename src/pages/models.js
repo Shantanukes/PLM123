@@ -14,9 +14,6 @@ export function renderModels(container) {
         <button class="btn btn-outline btn-sm" id="mdl-configurator">
           <span class="material-icons-outlined" style="font-size:16px">tune</span>Configurator
         </button>
-        <button class="btn btn-outline btn-sm" id="mdl-create-bom" style="border-color:var(--brand-secondary);color:var(--brand-secondary)">
-          <span class="material-icons-outlined" style="font-size:16px">account_tree</span>Create BOM
-        </button>
         <button class="btn btn-primary btn-sm" id="mdl-add">
           <span class="material-icons-outlined" style="font-size:16px">add_circle</span>Add Model
         </button>
@@ -28,107 +25,6 @@ export function renderModels(container) {
     <div id="mdl-content" style="margin-top: 16px;"></div>
   `;
 
-  // ── Create BOM from Model ──────────────────────────────────
-  container.querySelector('#mdl-create-bom')?.addEventListener('click', async () => {
-    // Show a loading state in a model picker modal
-    showModal('Create BOM — Select Model',
-      `<div style="padding:4px 0 12px">
-         <p class="text-sm text-secondary" style="margin-bottom:14px">Select a vehicle model to automatically populate the BOM creation form.</p>
-         <div class="form-group">
-           <label class="form-label">Vehicle Model <span style="color:#DC2626">*</span></label>
-           <select class="form-select" id="bom-model-picker">
-             <option value="">Loading models…</option>
-           </select>
-         </div>
-         <div id="bom-model-preview" style="margin-top:14px;display:none">
-           <div style="background:var(--bg-muted);border-radius:var(--radius-md);padding:14px 18px;border:1px solid var(--border-light)">
-             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:0.82rem">
-               <div><span style="color:var(--text-secondary)">Model Code:</span> <span id="bmp-code" style="font-family:var(--font-mono);font-weight:700"></span></div>
-               <div><span style="color:var(--text-secondary)">Category:</span> <span id="bmp-cat"></span></div>
-               <div><span style="color:var(--text-secondary)">Category Code:</span> <span id="bmp-catcode" style="font-family:var(--font-mono)"></span></div>
-               <div><span style="color:var(--text-secondary)">Segment:</span> <span id="bmp-seg"></span></div>
-               <div style="grid-column:1/-1"><span style="color:var(--text-secondary)">Description:</span> <span id="bmp-desc"></span></div>
-             </div>
-           </div>
-         </div>
-       </div>`,
-      `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-       <button class="btn btn-primary" id="bom-picker-confirm" disabled>
-         <span class="material-icons-outlined" style="font-size:16px;vertical-align:-3px">account_tree</span>
-         Open BOM Form
-       </button>`
-    );
-
-    // Fetch models and populate dropdown
-    let allModels = [];
-    try {
-      const raw = await getVehicleModels();
-      allModels = Array.isArray(raw) ? raw : Object.values(raw).flat();
-    } catch (err) {
-      console.error('[CREATE BOM] Could not fetch vehicle models:', err);
-      showToast('Failed to load vehicle models', 'error');
-      allModels = [];
-    }
-
-    const picker = document.getElementById('bom-model-picker');
-    const preview = document.getElementById('bom-model-preview');
-    const confirmBtn = document.getElementById('bom-picker-confirm');
-
-    if (!picker) return;
-
-    if (!allModels.length) {
-      picker.innerHTML = '<option value="">No models found</option>';
-    } else {
-      picker.innerHTML = '<option value="">Select a model…</option>' +
-        allModels.map(m =>
-          `<option value="${m.id}">${m.code ? `[${m.code}] ` : ''}${m.name || 'Unnamed Model'}</option>`
-        ).join('');
-    }
-
-    // Show preview card when a model is selected
-    picker.addEventListener('change', () => {
-      const selectedId = picker.value;
-      const model = allModels.find(m => String(m.id) === String(selectedId));
-
-      if (!model) {
-        preview.style.display = 'none';
-        confirmBtn.disabled = true;
-        return;
-      }
-
-      document.getElementById('bmp-code').textContent = model.code || '-';
-      document.getElementById('bmp-cat').textContent = model.categoryLabel || '-';
-      document.getElementById('bmp-catcode').textContent = model.categoryCode || '-';
-      document.getElementById('bmp-seg').textContent = model.segment || '-';
-      document.getElementById('bmp-desc').textContent = model.description || '-';
-      preview.style.display = 'block';
-      confirmBtn.disabled = false;
-    });
-
-    // Open the BOM form pre-filled with the selected model
-    confirmBtn?.addEventListener('click', () => {
-      const selectedId = picker.value;
-      const model = allModels.find(m => String(m.id) === String(selectedId));
-      if (!model) return showToast('Please select a model first', 'error');
-
-      // Close the picker modal
-      document.querySelector('.modal-overlay')?.remove();
-
-      // Build the prefill object mapping model fields → BOM fields
-      const prefill = {
-        categoryCode: model.categoryCode || '',
-        modelCode: model.code || '',
-        name: model.name || '',
-        description: model.description || '',
-        vehicleModelId: model.id || 0,
-        teamId: model.teamId || '',
-        parentBOMId: model.parentBOMId || '',
-      };
-
-      // Open the BOM creation form with prefill data
-      openCreateBomModal(prefill);
-    });
-  });
 
   container.querySelector('#mdl-add')?.addEventListener('click', () => {
 
@@ -308,17 +204,13 @@ function buildCatalogueCards(tc, models) {
         </button>
       </div>
       <div class="card-body">
-        <div style="font-size:0.857rem;color:var(--text-secondary);margin-bottom:14px">${m.segment || '-'} · ${m.platform || '-'}</div>
+        <div style="font-size:0.857rem;color:var(--text-secondary);margin-bottom:14px">Created: ${m.createdAt ? new Date(m.createdAt).toLocaleString() : '-'}</div>
         <div class="detail-grid">
           <div class="detail-field"><div class="detail-label">Model Code</div><div class="detail-value" style="font-family:var(--font-mono);font-weight:700">${m.modelCode || m.code || '-'}</div></div>
           <div class="detail-field"><div class="detail-label">Variant</div><div class="detail-value">${m.variant || '-'}</div></div>
-          <div class="detail-field"><div class="detail-label">Voltage</div><div class="detail-value">${m.voltage || '-'}</div></div>
-          <div class="detail-field"><div class="detail-label">Motor</div><div class="detail-value">${m.motor || '-'}</div></div>
-          <div class="detail-field"><div class="detail-label">Top Speed</div><div class="detail-value">${m.topSpeed || '-'}</div></div>
-          <div class="detail-field"><div class="detail-label">Range</div><div class="detail-value">${m.range || '-'}</div></div>
-          <div class="detail-field" style="grid-column:1/-1"><div class="detail-label">Category</div><div class="detail-value">${m.categoryLabel || '-'}</div></div>
+          <div class="detail-field"><div class="detail-label">Category Code</div><div class="detail-value">${m.categoryCode || '-'}</div></div>
+          <div class="detail-field"><div class="detail-label">Color</div><div class="detail-value">${m.colorHex || '-'}</div></div>
         </div>
-        <div style="font-size:0.714rem;color:var(--text-tertiary);margin-top:12px;font-weight:500;">Production: ${m.producedStats || '-'}</div>
         <div class="divider"></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline btn-xs view-bom-btn" data-name="${m.name}">View BOM</button>
@@ -396,23 +288,10 @@ function buildCatalogueCards(tc, models) {
       showModal('Edit Vehicle Model',
         `<div class="grid-2" style="gap:16px;max-height:60vh;overflow-y:auto;padding-right:8px;">
           <div class="form-group"><label class="form-label">Model Name <span style="color:#DC2626">*</span></label><input class="form-input" id="edit-mdl-name" value="${model.name || ''}" /></div>
-          <div class="form-group"><label class="form-label">Model Code <span style="color:#DC2626">*</span></label><input class="form-input" id="edit-mdl-code" value="${model.code || ''}" /></div>
+          <div class="form-group"><label class="form-label">Model Code <span style="color:#DC2626">*</span></label><input class="form-input" id="edit-mdl-code" value="${model.modelCode || model.code || ''}" /></div>
           <div class="form-group"><label class="form-label">Category Code</label><input class="form-input" id="edit-mdl-catcode" value="${model.categoryCode || ''}" /></div>
-          <div class="form-group"><label class="form-label">Category Label</label><input class="form-input" id="edit-mdl-catlabel" value="${model.categoryLabel || ''}" /></div>
           <div class="form-group"><label class="form-label">Variant</label><input class="form-input" id="edit-mdl-variant" value="${model.variant || ''}" /></div>
-          <div class="form-group"><label class="form-label">Segment</label><input class="form-input" id="edit-mdl-segment" value="${model.segment || ''}" /></div>
-          <div class="form-group"><label class="form-label">Platform</label><input class="form-input" id="edit-mdl-platform" value="${model.platform || ''}" /></div>
-          <div class="form-group"><label class="form-label">Voltage</label><input class="form-input" id="edit-mdl-voltage" value="${model.voltage || ''}" /></div>
-          <div class="form-group"><label class="form-label">Motor</label><input class="form-input" id="edit-mdl-motor" value="${model.motor || ''}" /></div>
-          <div class="form-group"><label class="form-label">Top Speed</label><input class="form-input" id="edit-mdl-topspeed" value="${model.topSpeed || ''}" /></div>
-          <div class="form-group"><label class="form-label">Range</label><input class="form-input" id="edit-mdl-range" value="${model.range || ''}" /></div>
-          <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="edit-mdl-status">
-            <option value="production" ${model.status === 'production' ? 'selected' : ''}>Production</option>
-            <option value="pilot" ${model.status === 'pilot' ? 'selected' : ''}>Pilot Build</option>
-            <option value="concept" ${model.status === 'concept' ? 'selected' : ''}>Concept</option>
-          </select></div>
           <div class="form-group"><label class="form-label">Color</label><input class="form-input" id="edit-mdl-colorhex" placeholder="e.g. Blue" value="${model.colorHex || ''}" /></div>
-          <div class="form-group"><label class="form-label">Produced Stats</label><input class="form-input" id="edit-mdl-produced" value="${model.producedStats || ''}" /></div>
           <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description / Notes</label><textarea class="form-input" id="edit-mdl-desc" rows="2" style="resize:vertical">${model.description || ''}</textarea></div>
         </div>`,
         `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
@@ -432,19 +311,10 @@ function buildCatalogueCards(tc, models) {
 
           const payload = {
             name: name,
-            code: code,
+            modelCode: code,
             categoryCode: document.getElementById('edit-mdl-catcode')?.value || '',
-            categoryLabel: document.getElementById('edit-mdl-catlabel')?.value || '',
             variant: document.getElementById('edit-mdl-variant')?.value || '',
-            segment: document.getElementById('edit-mdl-segment')?.value || '',
-            platform: document.getElementById('edit-mdl-platform')?.value || '',
-            voltage: document.getElementById('edit-mdl-voltage')?.value || '',
-            motor: document.getElementById('edit-mdl-motor')?.value || '',
-            topSpeed: document.getElementById('edit-mdl-topspeed')?.value || '',
-            range: document.getElementById('edit-mdl-range')?.value || '',
-            status: document.getElementById('edit-mdl-status')?.value || 'concept',
             colorHex: document.getElementById('edit-mdl-colorhex')?.value || '',
-            producedStats: document.getElementById('edit-mdl-produced')?.value || '',
             description: document.getElementById('edit-mdl-desc')?.value || ''
           };
 
@@ -452,7 +322,7 @@ function buildCatalogueCards(tc, models) {
             await updateVehicleModel(model.id, payload);
             document.querySelector('.modal-overlay')?.remove();
             showToast(`Model "${name}" successfully updated!`, 'success');
-            renderModelTab(tc, 'catalogue');
+            renderCatalogue(tc);
           } catch (err) {
             console.error(err);
             showToast('Failed to update model', 'error');
