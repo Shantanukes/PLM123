@@ -1,4 +1,4 @@
-import { authFetch } from './client.js';
+  import { authFetch } from './client.js';
 import { getErrorMessageFromResponse } from './auth.js';
 
 let cacheParts = {};
@@ -119,17 +119,10 @@ export async function getPartById(id) {
   return response.json();
 }
 
-export async function revisePart(partId, newDevStatusCode = null, newRevisionDigits = null) {
+export async function revisePart(formData) {
   const response = await authFetch('/api/Parts/revise', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      partId,
-      newDevStatusCode: newDevStatusCode || null,
-      newRevisionDigits: newRevisionDigits || null,
-    }),
+    body: formData,
   });
 
   let rawData = null;

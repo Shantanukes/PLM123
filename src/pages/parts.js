@@ -256,6 +256,7 @@ export function renderParts(container) {
 
     <div class="tabs" id="part-tabs">
       <button class="tab-btn active" data-tab="part-search">Part Search</button>
+      <button class="tab-btn" data-tab="part-revision">Part Revision</button>
       <button class="tab-btn" data-tab="create-part">Create Part</button>
     </div>
 
@@ -281,6 +282,7 @@ export function renderParts(container) {
 
 function renderTabContent(tc, tab) {
   if (tab === 'part-search') renderPartSearch(tc);
+  else if (tab === 'part-revision') renderPartRevision(tc);
   else if (tab === 'create-part') renderCreatePart(tc);
 }
 
@@ -1235,6 +1237,14 @@ function openRevisePartModal(p, onRevised) {
         <input class="form-input" id="revise-rev-digits" placeholder="e.g. 01 (leave blank to auto-increment)" />
       </div>
       <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Reason</label>
+        <input class="form-input" id="revise-reason" placeholder="Enter reason for revision" />
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Drawing File <span style="color:#DC2626">*</span></label>
+        <input class="form-input" type="file" id="revise-drawing-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.stp,.step" />
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
         <div id="revise-response-preview" style="display:none;background:var(--bg-muted);border-radius:var(--radius-sm);padding:12px;font-family:var(--font-mono);font-size:0.75rem;white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
       </div>
     </div>`,
@@ -1246,12 +1256,29 @@ function openRevisePartModal(p, onRevised) {
     document.getElementById('revise-confirm')?.addEventListener('click', async () => {
       const devCode = document.getElementById('revise-dev-status')?.value?.trim() || null;
       const revDigits = document.getElementById('revise-rev-digits')?.value?.trim() || null;
+      const reason = document.getElementById('revise-reason')?.value?.trim() || null;
+      const fileInput = document.getElementById('revise-drawing-file');
+      
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        return showToast('Drawing File is mandatory for part revision.', 'error');
+      }
+      
+      const file = fileInput.files[0];
+      
       const preview = document.getElementById('revise-response-preview');
       const btn = document.getElementById('revise-confirm');
       btn.disabled = true;
       btn.textContent = 'Revising…';
+      
+      const formData = new FormData();
+      formData.append('PartId', p.id);
+      if (devCode) formData.append('NewDevStatusCode', devCode);
+      if (revDigits) formData.append('NewRevisionDigits', revDigits);
+      if (reason) formData.append('Reason', reason);
+      formData.append('drawingFile', file);
+
       try {
-        const result = await revisePart(p.id, devCode || null, revDigits || null);
+        const result = await revisePart(formData);
         if (preview) {
           preview.style.display = 'block';
           preview.textContent = JSON.stringify(result, null, 2);
@@ -1693,6 +1720,106 @@ async function renderCreatePart(tc) {
       console.error('[PART CREATE] Error:', err);
       showToast(err instanceof Error ? err.message : 'Unable to create part.', 'error');
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:16px">send</span>Create & Submit for Review'; }
+    }
+  });
+}
+
+async function renderPartRevision(tc) {
+  tc.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body" style="padding:16px">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div class="global-search" style="flex:1;height:40px">
+            <span class="material-icons-outlined">search</span>
+            <input type="text" id="part-revision-input" placeholder="Search by Part ID or Part Number (e.g. 278 or GA1050013AX00)..." />
+          </div>
+          <button class="btn btn-primary" id="btn-search-revision">Search Revisions</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="revision-results-container" style="display:none;">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-body">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+            <div style="font-weight:700;font-size:1.1rem" id="rev-base-identifier">-</div>
+            <div><strong>Total Revisions:</strong> <span class="badge" style="background:#2563EB;color:#fff" id="rev-total-count">-</span></div>
+          </div>
+          <div style="font-size:0.9rem; color:var(--text-secondary)">
+            Current Revision Part Number: <strong style="color:var(--text-primary)" id="rev-current-pn">-</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body no-pad">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>REV. NO</th>
+                <th>PART ID</th>
+                <th>PART NUMBER</th>
+                <th>NAME</th>
+                <th>REV. LTR/DIGITS</th>
+                <th>DEV STATUS</th>
+                <th>LIFECYCLE</th>
+                <th>CREATED AT</th>
+              </tr>
+            </thead>
+            <tbody id="revision-table-body">
+              <tr><td colspan="8" style="text-align:center;padding:20px">No revisions found.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  tc.querySelector('#btn-search-revision').addEventListener('click', async () => {
+    const input = tc.querySelector('#part-revision-input').value.trim();
+    if (!input) return showToast('Please enter a Part ID or Part Number', 'warning');
+    
+    const isId = /^\d+$/.test(input);
+    const endpoint = isId ? `/api/Parts/${input}/revisions` : `/api/Parts/number/${encodeURIComponent(input)}/revisions`;
+    
+    const btn = tc.querySelector('#btn-search-revision');
+    btn.disabled = true;
+    btn.textContent = 'Searching...';
+    
+    try {
+      const res = await authFetch(endpoint);
+      if (!res.ok) throw new Error('Failed to fetch revisions');
+      const data = await res.json();
+      
+      tc.querySelector('#revision-results-container').style.display = 'block';
+      tc.querySelector('#rev-base-identifier').textContent = data.basePartIdentifier || 'Unknown Base Part';
+      tc.querySelector('#rev-total-count').textContent = data.totalRevisions || '0';
+      tc.querySelector('#rev-current-pn').textContent = data.currentRevisionPartNumber || '-';
+      
+      const tbody = tc.querySelector('#revision-table-body');
+      if (data.revisions && data.revisions.length > 0) {
+        tbody.innerHTML = data.revisions.map(r => `
+          <tr>
+            <td><span class="badge" style="background:#F3F4F6;color:#374151">${r.revisionNumber}</span></td>
+            <td>${r.partId}</td>
+            <td><span class="part-number">${r.partNumber}</span></td>
+            <td>${r.name || '-'}</td>
+            <td>${r.revisionLetter || ''}${r.revisionDigits || ''}</td>
+            <td><span class="tag tag-amber">${r.devStatusCode || '-'}</span></td>
+            <td><span class="badge ${r.lifecycleStatus === 0 ? 'badge-draft' : r.lifecycleStatus === 1 ? 'badge-review' : 'badge-released'}">${r.lifecycleStatusLabel || '-'}</span></td>
+            <td>${r.createdAt ? new Date(r.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px">No revisions found.</td></tr>';
+      }
+      
+    } catch (err) {
+      showToast(err.message, 'error');
+      tc.querySelector('#revision-results-container').style.display = 'none';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Search Revisions';
     }
   });
 }
