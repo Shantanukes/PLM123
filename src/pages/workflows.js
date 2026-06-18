@@ -305,10 +305,10 @@ async function renderMyTasks(tc) {
           <td>${formattedDate}</td>
           <td>
             ${['UploadDrawing', 'ReUploadDrawing'].includes(t.taskType)
-              ? `<button class="btn btn-primary btn-xs nav-upload-btn" data-part="${t.partNumber || t.partId}">Upload Drawing</button>`
-              : (['FixPartNumber'].includes(t.taskType)
-                  ? `<button class="btn btn-warning btn-xs modify-part-btn" data-partid="${t.partId}">Modify Part</button>`
-                  : `<button class="btn btn-outline btn-xs" onclick="window.location.hash='#/parts/${t.partId}'">View Part</button>`)}
+          ? `<button class="btn btn-primary btn-xs nav-upload-btn" data-part="${t.partNumber || t.partId}">Upload Drawing</button>`
+          : (['FixPartNumber'].includes(t.taskType)
+            ? `<button class="btn btn-warning btn-xs modify-part-btn" data-partid="${t.partId}">Modify Part</button>`
+            : `<button class="btn btn-outline btn-xs" onclick="window.location.hash='#/parts/${t.partId}'">View Part</button>`)}
           </td>
         </tr>
       `;
@@ -355,8 +355,8 @@ async function renderMyTasks(tc) {
                 <td style="font-family:var(--font-mono); font-size:0.857rem;">${t.ref}</td>
                 <td>
                   ${(t.type === 'UploadDrawing' || t.type === 'ReUploadDrawing') && !isDone ?
-                    `<button class="btn btn-primary btn-xs nav-upload-btn" data-part="${t.ref !== '-' ? t.ref : t.entityId}">Upload Drawing</button>` :
-                    ((t.type === 'Part' || t.type === 'PartNumber' || t.type?.toLowerCase() === 'drawing') && !isDone ? `<button class="btn btn-outline btn-xs view-stage-btn" data-id="${t.entityId}" data-type="${t.type}">View Stage</button>` : '')}
+        `<button class="btn btn-primary btn-xs nav-upload-btn" data-part="${t.ref !== '-' ? t.ref : t.entityId}">Upload Drawing</button>` :
+        ((t.type === 'Part' || t.type === 'PartNumber' || t.type?.toLowerCase() === 'drawing') && !isDone ? `<button class="btn btn-outline btn-xs view-stage-btn" data-id="${t.entityId}" data-type="${t.type}">View Stage</button>` : '')}
                 </td>
               </tr>`}).join('') : '<tr><td colspan="8" class="text-center text-secondary py-4" style="text-align: center;">No pending tasks</td></tr>'}
           </tbody>
@@ -382,7 +382,7 @@ async function renderMyTasks(tc) {
 
       try {
         const part = await getPartById(partId);
-        
+
         const overlay = showModal('Modify Part',
           `<div class="detail-grid" style="grid-template-columns: 1fr 1fr; gap:16px;">
              <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="mod-name" value="${part.name || ''}"></div>
@@ -480,12 +480,12 @@ async function renderMyTasks(tc) {
                  </div>
                  <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
                    <input type="checkbox" id="stage-revert-designer" />
-                   <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer (for Reject only)</label>
+                   <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer </label>
                  </div>
                  ${(data.role || '').toLowerCase().replace(/\s/g, '') === 'coehead' ? `
                  <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
                    <input type="checkbox" id="stage-revert-pm" />
-                   <label for="stage-revert-pm" style="font-size: 13px;">Revert through PM (for Reject only)</label>
+                   <label for="stage-revert-pm" style="font-size: 13px;">Revert through PM </label>
                  </div>` : ''}
                ` : ''}
              </div>`,
@@ -599,8 +599,8 @@ async function renderInProgress(tc) {
                 <td>
                   <button class="btn btn-outline btn-xs view-wf-btn" data-id="${t.id}" style="margin-right:4px;">View</button>
                   ${(t.type === 'UploadDrawing' || t.type === 'ReUploadDrawing') ?
-                    `<button class="btn btn-primary btn-xs nav-upload-btn" data-part="${t.ref !== '-' ? t.ref : t.entityId}">Upload Drawing</button>` :
-                    ((t.type === 'Part' || t.type === 'PartNumber' || t.type?.toLowerCase() === 'drawing') ? `<button class="btn btn-outline btn-xs view-stage-btn" data-id="${t.entityId}" data-type="${t.type}">View Stage</button>` : '')}
+      `<button class="btn btn-primary btn-xs nav-upload-btn" data-part="${t.ref !== '-' ? t.ref : t.entityId}">Upload Drawing</button>` :
+      ((t.type === 'Part' || t.type === 'PartNumber' || t.type?.toLowerCase() === 'drawing') ? `<button class="btn btn-outline btn-xs view-stage-btn" data-id="${t.entityId}" data-type="${t.type}">View Stage</button>` : '')}
                 </td>
               </tr>
             `).join('') : '<tr><td colspan="8" class="text-center text-secondary py-4" style="text-align: center;">No Pending workflows</td></tr>'}
@@ -651,12 +651,31 @@ async function renderInProgress(tc) {
                  </div>
                  <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
                    <input type="checkbox" id="stage-revert-designer" />
-                   <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer (for Reject only)</label>
+                   <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer </label>
                  </div>
                  ${(data.role || '').toLowerCase().replace(/\s/g, '') === 'coehead' ? `
                  <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                   <input type="checkbox" id="stage-revert-pm" />
-                   <label for="stage-revert-pm" style="font-size: 13px;">Revert through PM (for Reject only)</label>
+                   <input type="checkbox" id="stage-revert-pm-checkbox" onchange="document.getElementById('pm-dropdown-wrapper').style.display = this.checked ? 'block' : 'none'; if(!this.checked) document.getElementById('stage-pm-dropdown').value='';" />
+                   <label for="stage-revert-pm-checkbox" style="font-size: 13px;">Revert through PM</label>
+                 </div>
+                 <div id="pm-dropdown-wrapper" style="display:none; margin-top: 8px;" class="form-group">
+                   <label class="form-label" style="font-size: 13px;">Select Project Manager</label>
+                   <select class="form-select" id="stage-pm-dropdown">
+                     <option value="">Select a PM...</option>
+                   </select>
+                 </div>` : ''}
+                 ${(data.role || '').toLowerCase().replace(/\s/g, '') === 'projectmanager' ? `
+                 <div class="form-group" style="margin-top: 12px;">
+                   <label class="form-label" style="font-size: 13px;">Proto Study User</label>
+                   <select class="form-select" id="stage-proto-study-select">
+                     <option value="0">Select User...</option>
+                   </select>
+                 </div>
+                 <div class="form-group" style="margin-top: 12px;">
+                   <label class="form-label" style="font-size: 13px;">Proto Approval User</label>
+                   <select class="form-select" id="stage-proto-approval-select">
+                     <option value="0">Select User...</option>
+                   </select>
                  </div>` : ''}
                ` : ''}
              </div>`,
@@ -668,16 +687,85 @@ async function renderInProgress(tc) {
           );
 
           if (isApprovable) {
+            const revertPmCheckbox = document.getElementById('stage-revert-pm-checkbox');
+            const pmSelect = document.getElementById('stage-pm-dropdown');
+
+            if (revertPmCheckbox && pmSelect) {
+              revertPmCheckbox.addEventListener('change', async (e) => {
+                if (e.target.checked) {
+                  if (pmSelect.options.length <= 1) {
+                    try {
+                      pmSelect.innerHTML = '<option value="">Loading...</option>';
+                      const res = await authFetch('/api/Parts/project-managers');
+                      if (res.ok) {
+                        const pms = await res.json();
+                        pmSelect.innerHTML = '<option value="">Select a PM...</option>' + 
+                          pms.map(pm => `<option value="${pm.id}">${pm.fullName}</option>`).join('');
+                      } else {
+                        pmSelect.innerHTML = '<option value="">Failed to load PMs</option>';
+                      }
+                    } catch (err) {
+                      pmSelect.innerHTML = '<option value="">Error loading PMs</option>';
+                    }
+                  }
+                } else {
+                  pmSelect.value = '';
+                }
+              });
+            }
+
+            const protoStudySelect = document.getElementById('stage-proto-study-select');
+            const protoApprovalSelect = document.getElementById('stage-proto-approval-select');
+            if (protoStudySelect && protoApprovalSelect) {
+               try {
+                 const res = await authFetch('/api/Members');
+                 if (res.ok) {
+                   const membersData = await res.json();
+                   const membersList = Array.isArray(membersData) ? membersData : (Object.keys(membersData).filter(k => Array.isArray(membersData[k])).length > 0 ? membersData[Object.keys(membersData).filter(k => Array.isArray(membersData[k]))[0]] : [membersData]);
+                   const optionsHtml = '<option value="0">Select User...</option>' + membersList.map(m => `<option value="${m.id || m.userId || 0}">${m.fullName || m.name || 'Unknown'}</option>`).join('');
+                   protoStudySelect.innerHTML = optionsHtml;
+                   protoApprovalSelect.innerHTML = optionsHtml;
+                 }
+               } catch (err) {
+                 console.error('Failed to load members for proto users', err);
+               }
+            }
+
             overlay.querySelector('#approve-stage-btn')?.addEventListener('click', async (btnEv) => {
               const comments = overlay.querySelector('#stage-comments')?.value?.trim() || '';
+              
+              const cb = document.getElementById('stage-revert-pm-checkbox');
+              const revertThroughPM = cb ? cb.checked : false;
+              
+              const sel = document.getElementById('stage-pm-dropdown');
+              const selectedPMId = sel && sel.value ? parseInt(sel.value, 10) : 0;
+              
+              if (revertThroughPM && (!selectedPMId || isNaN(selectedPMId))) {
+                 showToast('Please select a Project Manager before proceeding', 'warning');
+                 return;
+              }
+
+              const pStudy = document.getElementById('stage-proto-study-select');
+              const pApprove = document.getElementById('stage-proto-approval-select');
+              const protoStudyUserId = pStudy && pStudy.value ? parseInt(pStudy.value, 10) : 0;
+              const protoApprovalUserId = pApprove && pApprove.value ? parseInt(pApprove.value, 10) : 0;
+
               const btn = btnEv.currentTarget;
               btn.disabled = true;
               btn.textContent = 'Approving...';
               try {
+                const payload = {
+                  comments,
+                  revertToDesigner: false,
+                  revertThroughPM,
+                  selectedPMId: revertThroughPM ? (selectedPMId || 0) : 0,
+                  protoStudyUserId,
+                  protoApprovalUserId
+                };
                 if (resolvedType === 'PartNumber') {
-                  await approvePartNumber(entityId, { comments, revertToDesigner: false, revertThroughPM: false, selectedPMId: 0 });
+                  await approvePartNumber(entityId, payload);
                 } else {
-                  await approveDrawing(entityId, { comments, revertToDesigner: false, revertThroughPM: false, selectedPMId: 0 });
+                  await approveDrawing(entityId, payload);
                 }
                 showToast('Approved successfully', 'success');
                 overlay.remove();
@@ -693,15 +781,39 @@ async function renderInProgress(tc) {
             overlay.querySelector('#reject-stage-btn')?.addEventListener('click', async (btnEv) => {
               const comments = overlay.querySelector('#stage-comments')?.value?.trim() || '';
               const revertToDesigner = overlay.querySelector('#stage-revert-designer')?.checked || false;
-              const revertThroughPM = overlay.querySelector('#stage-revert-pm')?.checked || false;
+              
+              const cb = document.getElementById('stage-revert-pm-checkbox');
+              const revertThroughPM = cb ? cb.checked : false;
+              
+              const sel = document.getElementById('stage-pm-dropdown');
+              const selectedPMId = sel && sel.value ? parseInt(sel.value, 10) : 0;
+              
+              if (revertThroughPM && (!selectedPMId || isNaN(selectedPMId))) {
+                 showToast('Please select a Project Manager before proceeding', 'warning');
+                 return;
+              }
+
+              const pStudy = document.getElementById('stage-proto-study-select');
+              const pApprove = document.getElementById('stage-proto-approval-select');
+              const protoStudyUserId = pStudy && pStudy.value ? parseInt(pStudy.value, 10) : 0;
+              const protoApprovalUserId = pApprove && pApprove.value ? parseInt(pApprove.value, 10) : 0;
+
               const btn = btnEv.currentTarget;
               btn.disabled = true;
               btn.textContent = 'Rejecting...';
               try {
+                const payload = {
+                  comments,
+                  revertToDesigner,
+                  revertThroughPM,
+                  selectedPMId: revertThroughPM ? (selectedPMId || 0) : 0,
+                  protoStudyUserId,
+                  protoApprovalUserId
+                };
                 if (resolvedType === 'PartNumber') {
-                  await rejectPartNumber(entityId, { comments, revertToDesigner, revertThroughPM, selectedPMId: 0 });
+                  await rejectPartNumber(entityId, payload);
                 } else {
-                  await rejectDrawing(entityId, { comments, revertToDesigner, revertThroughPM, selectedPMId: 0 });
+                  await rejectDrawing(entityId, payload);
                 }
                 showToast('Rejected successfully', 'success');
                 overlay.remove();
