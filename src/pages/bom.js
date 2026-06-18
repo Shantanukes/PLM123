@@ -256,6 +256,41 @@ function renderTabContent(tc, tab) {
 
 // ─── Part Linking ───────────────────────────────────────────────
 async function renderPartLinking(tc) {
+  async function openPartInfoModal(partId) {
+    try {
+      const p = await getPartById(partId);
+      if (!p) {
+        showToast('Part details not found.', 'error');
+        return;
+      }
+      
+      const tableHtml = `
+        <div style="overflow-x: auto; margin-top: 8px;">
+          <table class="data-table" style="width: 100%; text-align: left;">
+            <tbody>
+              <tr><td style="font-weight: 600; width: 35%;">Part Number</td><td>${p.partNumber || '-'}</td></tr>
+              <tr><td style="font-weight: 600;">Name</td><td>${p.name || '-'}</td></tr>
+              <tr><td style="font-weight: 600;">Description</td><td>${p.description || '-'}</td></tr>
+              <tr><td style="font-weight: 600;">Category</td><td>${p.categoryCode || ''} - ${p.categoryName || ''}</td></tr>
+              <tr><td style="font-weight: 600;">Model Code</td><td>${p.modelCode || '-'}</td></tr>
+              <tr><td style="font-weight: 600;">Group / Subgroup</td><td>${p.groupCode || '-'}${p.subGroupCode ? '.' + p.subGroupCode : ''} (${p.groupName || '-'})</td></tr>
+              <tr><td style="font-weight: 600;">Machining Status</td><td>${p.machiningCode || ''} - ${p.machiningName || ''}</td></tr>
+              <tr><td style="font-weight: 600;">Dev Status</td><td>${p.devStatusCode || ''} - ${p.devStatusName || ''}</td></tr>
+              <tr><td style="font-weight: 600;">Revision</td><td>${p.revisionLetter || ''}${p.revisionDigits || ''} (Rev ${p.revisionNumber || '-'})</td></tr>
+              <tr><td style="font-weight: 600;">Quantity</td><td>${p.quantity ?? 1} ${p.unitOfMeasure || 'Each'}</td></tr>
+              <tr><td style="font-weight: 600;">Weight</td><td>${p.weight ?? 0} kg</td></tr>
+              <tr><td style="font-weight: 600;">Make/Buy</td><td>${p.makeBuyLabel || '-'}</td></tr>
+              <tr><td style="font-weight: 600;">Lifecycle Status</td><td>${p.lifecycleStatusLabel || '-'}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      showModal('Part Details', tableHtml);
+    } catch (err) {
+      showToast('Failed to load part details', 'error');
+    }
+  }
+
   tc.innerHTML = `
     <div style="display: flex; gap: 20px; align-items: flex-start;">
       <!-- Left Panel: BOM Selection -->
@@ -278,7 +313,7 @@ async function renderPartLinking(tc) {
                 <tr>
                   <th>Part Number</th>
                   <th>Part Name</th>
-                  <th style="width: 80px; text-align: center;">Action</th>
+                  <th style="width: 140px; text-align: center;">Action</th>
                 </tr>
               </thead>
               <tbody id="linked-parts-results">
@@ -309,7 +344,7 @@ async function renderPartLinking(tc) {
                 <tr>
                   <th>Part Number</th>
                   <th>Part Name</th>
-                  <th style="width: 80px; text-align: center;">Action</th>
+                  <th style="width: 140px; text-align: center;">Action</th>
                 </tr>
               </thead>
               <tbody id="search-parts-results">
@@ -369,10 +404,21 @@ async function renderPartLinking(tc) {
             <td class="part-number">${p.partNumber || '-'}</td>
             <td>${p.name || '-'}</td>
             <td style="text-align: center;">
+              <button class="btn btn-outline btn-sm btn-info-part" data-part-id="${p.id || p.partId}" style="margin-right: 4px;" title="Info">
+                <span class="material-icons-outlined" style="font-size:16px; pointer-events:none;">info</span>
+              </button>
               <button class="btn btn-outline btn-sm btn-unlink-part" data-part-id="${p.id || p.partId}" style="color:var(--danger); border-color:var(--danger)">Unlink</button>
             </td>
           </tr>
         `).join('');
+
+        // Attach info listeners
+        linkedTbody.querySelectorAll('.btn-info-part').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const partId = parseInt(e.currentTarget.dataset.partId, 10);
+            openPartInfoModal(partId);
+          });
+        });
 
         // Attach unlink listeners
         linkedTbody.querySelectorAll('.btn-unlink-part').forEach(btn => {
@@ -434,6 +480,9 @@ async function renderPartLinking(tc) {
         <td class="part-number">${p.partNumber || '-'}</td>
         <td>${p.name || '-'}</td>
         <td style="text-align: center;">
+          <button class="btn btn-outline btn-sm btn-info-part" data-part-id="${p.id}" style="margin-right: 4px;" title="Info">
+            <span class="material-icons-outlined" style="font-size:16px; pointer-events:none;">info</span>
+          </button>
           ${isLinked 
             ? `<button class="btn btn-outline btn-sm btn-unlink-part" data-part-id="${p.id}" style="color:var(--danger); border-color:var(--danger)">Unlink</button>` 
             : `<button class="btn btn-primary btn-sm btn-link-part" data-part-id="${p.id}">Link</button>`
@@ -441,6 +490,14 @@ async function renderPartLinking(tc) {
         </td>
       </tr>
     `}).join('');
+
+    // Attach info listeners
+    searchTbody.querySelectorAll('.btn-info-part').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const partId = parseInt(e.currentTarget.dataset.partId, 10);
+        openPartInfoModal(partId);
+      });
+    });
 
     // Attach link listeners
     searchTbody.querySelectorAll('.btn-link-part').forEach(btn => {
