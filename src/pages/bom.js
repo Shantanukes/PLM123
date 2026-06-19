@@ -3,7 +3,7 @@ import { authFetch } from '../api/client.js';
 import { createPart, getParts, getPartById, getPartByNumber, updatePart } from '../api/parts.js';
 import { createBom, getBomTree, updateBomLine, deleteBomLine, getBomLines, getBomWhereUsed, getBomByTeamId, getBomParts, getAllBomsWithParts, linkBomWithParent, linkPartToBOM, unlinkPartFromBOM } from '../api/bom.js';
 
-// ─── Master Data from PartNo.xlsx ───────────────────────────
+// ΓöÇΓöÇΓöÇ Master Data from PartNo.xlsx ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 // Column 1: Product Category
 const PRODUCT_CATEGORIES = [
   { code: 'A', label: 'A - 4W Niche' },
@@ -15,7 +15,7 @@ const PRODUCT_CATEGORIES = [
   { code: 'G', label: 'G - 2 Wheel' },
 ];
 
-// Column 2: Model Number (Alpha-numeric) — letter + digit
+// Column 2: Model Number (Alpha-numeric) ΓÇö letter + digit
 const MODEL_NUMBERS = [
   { code: 'A1', label: 'A1 - SAFAR' },
   { code: 'B1', label: 'B1 - SOLECKSHAW LITE' },
@@ -52,7 +52,7 @@ const MACHINING_STATUS = [
   { code: '9', label: '9 - Casting' },
 ];
 
-// Column 10: Revision Letter — A–Z excluding I and O
+// Column 10: Revision Letter ΓÇö AΓÇôZ excluding I and O
 const REVISION_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'.split('');
 
 // Column 11: Development Status
@@ -63,7 +63,7 @@ const DEV_STATUS = [
   { code: 'S', label: 'S - For Spares Only' },
 ];
 
-// ─── Part Number Builder ─────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Part Number Builder ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 // Structure: [ProductCategory][ModelNumber][GroupCode][SubCode][SerialNo(3)][MachiningStatus][RevisionLetter][DevStatus]
 // Example:   B         M1        0          1          001       0             A               X  = BM10100 1AX
 // Total 11 digits: cat(1) + model(2) + group(1) + sub(1) + serial(3) + mach(1) + rev(1) + dev(1) = 11
@@ -74,7 +74,7 @@ function buildPartNumber({ categoryCode, modelCode, groupCode, subCode, serial =
   return `${categoryCode}${modelCode}${groupCode}${subCode}${s}${machiningCode}${revisionLetter}${devStatusCode}`;
 }
 
-// ─── Serial auto-increment from existing BOM_TREE ────────────
+// ΓöÇΓöÇΓöÇ Serial auto-increment from existing BOM_TREE ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function getNextSerial({ categoryCode, modelCode, groupCode, subCode }) {
   const prefix = `${categoryCode}${modelCode}${groupCode}${subCode}`.toUpperCase();
   let maxSerial = 0;
@@ -87,7 +87,7 @@ function getNextSerial({ categoryCode, modelCode, groupCode, subCode }) {
   return String(Math.min(999, maxSerial + 1)).padStart(3, '0');
 }
 
-// ─── Part data (mock/local cache) ────────────────────────────
+// ΓöÇΓöÇΓöÇ Part data (mock/local cache) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 const PARTS = {};
 
 const BOM_TREE = [];
@@ -105,12 +105,12 @@ let bomContainer = null;
 let detailPanel = null;
 let currentTab = 'bom-nav';
 
-// ─── Helper: build option HTML from array ───────────────────
+// ΓöÇΓöÇΓöÇ Helper: build option HTML from array ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function optionsHtml(items, valKey, labelKey) {
   return items.map(i => `<option value="${i[valKey]}">${i[labelKey]}</option>`).join('');
 }
 
-// ─── Helper: resolve backend part id ────────────────────────
+// ΓöÇΓöÇΓöÇ Helper: resolve backend part id ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 async function resolveBackendPartIdByNumber(partNumber) {
   if (!partNumber) return null;
   try {
@@ -136,7 +136,7 @@ async function resolveBackendIdForLocalPart(partKey) {
   return null;
 }
 
-// ─── BOM Tree helpers ────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ BOM Tree helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function getNodeIndexById(nodeId) {
   return BOM_TREE.findIndex(node => node.id === nodeId);
 }
@@ -167,8 +167,8 @@ function createPartRecordFromBom({ bomNumber, description, type, qty, unit, weig
     vt: type === '3w' ? '3-Wheeler' : '2-Wheeler',
     status: 'draft',
     rev: 'Rev 0',
-    devStatus: 'X — Concept',
-    machining: '0 — Assembly',
+    devStatus: 'X ΓÇö Concept',
+    machining: '0 ΓÇö Assembly',
     weight: weight > 0 ? `${weight} kg` : `${qty} ${unit || 'Each'}`,
     children: '0',
     model: parentId ? `Child of ${parentId}` : 'Root Assembly',
@@ -184,7 +184,7 @@ function createPartRecordFromBom({ bomNumber, description, type, qty, unit, weig
   };
 }
 
-// ─── Main render ─────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Main render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 export function renderBOM(container) {
   container.innerHTML = `
     <div class="page-header">
@@ -238,7 +238,7 @@ export function renderBOM(container) {
     const bomId = part.backendId;
 
     try {
-      showToast(`Preparing Excel export for BOM ${part.pn}…`, 'info');
+      showToast(`Preparing Excel export for BOM ${part.pn}ΓÇª`, 'info');
       const response = await authFetch(`/api/BOM/${bomId}/export-excel`, { method: 'GET' });
 
       if (!response.ok) {
@@ -337,21 +337,19 @@ async function renderPartLinking(tc) {
         </div>
         <div class="card">
           <div class="card-body" style="padding:0">
-            <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500;">
               <span>Currently Linked Parts</span>
-              <button class="btn btn-outline btn-sm" id="btn-unlink-selected" style="color:var(--danger); border-color:var(--danger); display:none;">Unlink Selected</button>
             </div>
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="width: 40px; text-align: center;"><input type="checkbox" id="chk-all-linked"></th>
                   <th>Part Number</th>
                   <th>Part Name</th>
-                  <th style="width: 140px; text-align: center;">Action</th>
+                  <th style="width: 80px; text-align: center;">Details</th>
                 </tr>
               </thead>
               <tbody id="linked-parts-results">
-                <tr><td colspan="4" style="text-align:center;padding:20px">Please load a BOM first.</td></tr>
+                <tr><td colspan="3" style="text-align:center;padding:20px">Please load a BOM first.</td></tr>
               </tbody>
             </table>
           </div>
@@ -362,8 +360,8 @@ async function renderPartLinking(tc) {
       <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
         <div class="card">
           <div class="card-body" style="padding:16px">
-            <h3 style="margin-bottom:12px;">2. Search & Link Parts</h3>
-            <p class="text-secondary" style="margin-bottom:12px; font-size: 13px;">Search for parts to link to the loaded BOM.</p>
+            <h3 style="margin-bottom:12px;">2. Search Parts</h3>
+            <p class="text-secondary" style="margin-bottom:12px; font-size: 13px;">Search for parts in the system.</p>
             <div style="display:flex;gap:8px;align-items:center;">
               <input type="text" id="part-link-search-input" class="form-input" placeholder="Search by name or number..." style="flex:1" />
               <button class="btn btn-primary" id="btn-search-parts">Search Parts</button>
@@ -372,21 +370,19 @@ async function renderPartLinking(tc) {
         </div>
         <div class="card">
           <div class="card-body" style="padding:0">
-            <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500;">
               <span>Search Results</span>
-              <button class="btn btn-primary btn-sm" id="btn-link-selected" style="display:none;">Link Selected</button>
             </div>
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="width: 40px; text-align: center;"><input type="checkbox" id="chk-all-search"></th>
                   <th>Part Number</th>
                   <th>Part Name</th>
-                  <th style="width: 140px; text-align: center;">Action</th>
+                  <th style="width: 80px; text-align: center;">Details</th>
                 </tr>
               </thead>
               <tbody id="search-parts-results">
-                <tr><td colspan="4" style="text-align:center;padding:20px">Search for parts to link.</td></tr>
+                <tr><td colspan="3" style="text-align:center;padding:20px">Search for parts in the system.</td></tr>
               </tbody>
             </table>
             <div class="pagination" id="search-parts-pagination" style="display:none; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid var(--border)">
@@ -405,120 +401,68 @@ async function renderPartLinking(tc) {
   `;
 
   let currentBomId = null;
-  let officiallyLinkedPartIds = new Set();
+  let allSearchParts = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
 
   const linkedTbody = tc.querySelector('#linked-parts-results');
   const searchTbody = tc.querySelector('#search-parts-results');
   const paginationDiv = tc.querySelector('#search-parts-pagination');
 
-  // Load BOM
+  // ── Render the "Currently Linked Parts" left panel ──
+  function renderLinkedPanel(items) {
+    if (!items || items.length === 0) {
+      linkedTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px">No parts linked to this BOM yet.</td></tr>';
+    } else {
+      linkedTbody.innerHTML = items.map(p => {
+        const partId = p.partId ?? p.id;
+        return '<tr data-id="' + partId + '">' +
+          '<td class="part-number">' + (p.partNumber || '-') + '</td>' +
+          '<td>' + (p.name || '-') + '</td>' +
+          '<td style="text-align: center;">' +
+            '<button class="btn btn-outline btn-sm btn-info-part" data-part-id="' + partId + '" title="Info">' +
+              '<span class="material-icons-outlined" style="font-size:16px; pointer-events:none;">info</span>' +
+            '</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+  }
+
+  // ── Core helper: re-fetch from API, rebuild set, re-render both panels ──
+  async function refreshLinkedState() {
+    if (!currentBomId) return;
+    try {
+      const linkedParts = await getBomParts(currentBomId);
+      const partsList = Array.isArray(linkedParts) ? linkedParts : (linkedParts?.items || [linkedParts]);
+      const linkedItems = partsList.filter(Boolean);
+      renderLinkedPanel(linkedItems);
+    } catch (err) {
+      console.error('[REFRESH LINKED STATE]', err);
+      showToast('Could not refresh link status from server.', 'error');
+    }
+  }
+
+  // ── Delegated click on Linked panel — registered ONCE ──
+  linkedTbody.addEventListener('click', async (e) => {
+    if (e.target.closest('.btn-info-part')) {
+      const b = e.target.closest('.btn-info-part');
+      openPartInfoModal(parseInt(b.dataset.partId, 10));
+      return;
+    }
+  });
+
+  // ── Load BOM ──
   tc.querySelector('#btn-load-bom')?.addEventListener('click', async () => {
     const bomIdInput = tc.querySelector('#part-link-bom-input').value.trim();
     if (!bomIdInput) {
       showToast('Please enter a BOM ID', 'error');
       return;
     }
-
     currentBomId = parseInt(bomIdInput, 10);
     linkedTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px">Loading linked parts...</td></tr>';
-
     try {
-      let linkedItems = [];
-      officiallyLinkedPartIds.clear();
-
-      try {
-        const linkedParts = await getBomParts(currentBomId);
-        const partsList = Array.isArray(linkedParts) ? linkedParts : (linkedParts?.items || [linkedParts]);
-        linkedItems = partsList.filter(Boolean);
-        // All parts returned by getBomParts() are linked to this BOM.
-        // Add every returned part unconditionally so we know they are linked.
-        linkedItems.forEach(p => {
-          const id = p.partId ?? p.id;
-          if (id != null) officiallyLinkedPartIds.add(id);
-        });
-      } catch (err) {
-        console.warn("No linked parts found or error:", err);
-      }
-
-      const items = linkedItems;
-
-      if (items.length === 0) {
-        linkedTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px">No parts linked to this BOM yet.</td></tr>';
-      } else {
-        linkedTbody.innerHTML = items.map(p => {
-          const partId = p.partId ?? p.id;
-          // Parts in this list come from getBomParts → they are all linked.
-          const isLinked = true;
-          return '<tr data-id="' + partId + '">' +
-            '<td style="text-align: center;"><input type="checkbox" class="chk-linked-part" data-part-id="' + partId + '"></td>' +
-            '<td class="part-number">' + (p.partNumber || '-') + '</td>' +
-            '<td>' + (p.name || '-') + '</td>' +
-            '<td style="text-align: center;">' +
-              '<button class="btn btn-outline btn-sm btn-info-part" data-part-id="' + partId + '" style="margin-right: 4px;" title="Info">' +
-                '<span class="material-icons-outlined" style="font-size:16px; pointer-events:none;">info</span>' +
-              '</button>' +
-              '<button class="btn btn-outline btn-sm btn-unlink-part action-btn" data-part-id="' + partId + '" style="color:var(--danger); border-color:var(--danger)">Unlink</button>' +
-            '</td>' +
-          '</tr>';
-        }).join('');
-
-        // Attach info listeners
-        linkedTbody.querySelectorAll('.btn-info-part').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const partId = parseInt(e.currentTarget.dataset.partId, 10);
-            openPartInfoModal(partId);
-          });
-        });
-
-        // We delegate link/unlink events because we have both buttons now
-        linkedTbody.addEventListener('click', async (e) => {
-          const btn = e.target.closest('.action-btn');
-          if (!btn || !currentBomId) return;
-
-          const partId = parseInt(btn.dataset.partId, 10);
-          btn.disabled = true;
-
-          if (btn.classList.contains('btn-unlink-part')) {
-            try {
-              await unlinkPartFromBOM(currentBomId, partId);
-              officiallyLinkedPartIds.delete(partId);
-
-              // Swap to Link
-              btn.outerHTML = `<button class="btn btn-primary btn-sm btn-link-part action-btn" data-part-id="${partId}">Link</button>`;
-
-              showToast('Part unlinked successfully', 'success');
-              if (searchTbody.querySelector(`[data-part-id="${partId}"]`)) {
-                displaySearchResults();
-              }
-            } catch (err) {
-              showToast(err.message || 'Failed to unlink part', 'error');
-              btn.disabled = false;
-            }
-          } else if (btn.classList.contains('btn-link-part')) {
-            try {
-              await linkPartToBOM(currentBomId, partId);
-              officiallyLinkedPartIds.add(partId);
-
-              // Swap to Unlink
-              btn.outerHTML = `<button class="btn btn-outline btn-sm btn-unlink-part action-btn" data-part-id="${partId}" style="color:var(--danger); border-color:var(--danger)">Unlink</button>`;
-
-              showToast('Part linked successfully', 'success');
-              if (searchTbody.querySelector(`[data-part-id="${partId}"]`)) {
-                displaySearchResults();
-              }
-            } catch (err) {
-              showToast(err.message || 'Failed to link part', 'error');
-              btn.disabled = false;
-            }
-          }
-        });
-      }
-
-      // If search results are already showing, refresh them so the "Link" buttons update state
-      if (allSearchParts.length > 0) {
-        displaySearchResults();
-      }
-
+      await refreshLinkedState();
     } catch (err) {
       console.error('[LOAD BOM]', err);
       linkedTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:red">Failed to load BOM.</td></tr>';
@@ -526,66 +470,10 @@ async function renderPartLinking(tc) {
     }
   });
 
-  // Setup bulk unlinking
-  const chkAllLinked = tc.querySelector('#chk-all-linked');
-  const btnUnlinkSelected = tc.querySelector('#btn-unlink-selected');
-  
-  chkAllLinked?.addEventListener('change', (e) => {
-    const isChecked = e.target.checked;
-    const checkboxes = linkedTbody.querySelectorAll('.chk-linked-part');
-    checkboxes.forEach(chk => chk.checked = isChecked);
-    btnUnlinkSelected.style.display = Array.from(checkboxes).some(c => c.checked) ? 'block' : 'none';
-  });
-
-  linkedTbody.addEventListener('change', (e) => {
-    if (e.target.classList.contains('chk-linked-part')) {
-      const checkboxes = linkedTbody.querySelectorAll('.chk-linked-part');
-      const anyChecked = Array.from(checkboxes).some(c => c.checked);
-      const allChecked = Array.from(checkboxes).every(c => c.checked);
-      chkAllLinked.checked = allChecked && checkboxes.length > 0;
-      btnUnlinkSelected.style.display = anyChecked ? 'block' : 'none';
-    }
-  });
-
-  btnUnlinkSelected?.addEventListener('click', async () => {
-    const checked = Array.from(linkedTbody.querySelectorAll('.chk-linked-part:checked'));
-    if (!currentBomId || checked.length === 0) return;
-    
-    btnUnlinkSelected.disabled = true;
-    btnUnlinkSelected.textContent = 'Unlinking...';
-    let successCount = 0;
-    
-    for (const chk of checked) {
-      const partId = parseInt(chk.dataset.partId, 10);
-      try {
-        await unlinkPartFromBOM(currentBomId, partId);
-        officiallyLinkedPartIds.delete(partId);
-        successCount++;
-      } catch (err) {
-        showToast('Failed to unlink part ' + partId + ': ' + err.message, 'error');
-      }
-    }
-    
-    if (successCount > 0) {
-      showToast('Successfully unlinked ' + successCount + ' part(s)', 'success');
-      tc.querySelector('#btn-load-bom').click(); // Reload BOM list
-      if (allSearchParts.length > 0) displaySearchResults(); // Update search UI
-    }
-    
-    btnUnlinkSelected.disabled = false;
-    btnUnlinkSelected.textContent = 'Unlink Selected';
-    btnUnlinkSelected.style.display = 'none';
-    chkAllLinked.checked = false;
-  });
-
-  // Search Parts
-  let allSearchParts = [];
-  let currentPage = 1;
-  const itemsPerPage = 10;
-
+  // ── Search Results rendering ──
   const displaySearchResults = () => {
     if (!allSearchParts || allSearchParts.length === 0) {
-      searchTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px">No parts found.</td></tr>';
+      searchTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px">No parts found.</td></tr>';
       paginationDiv.style.display = 'none';
       return;
     }
@@ -600,74 +488,16 @@ async function renderPartLinking(tc) {
 
     searchTbody.innerHTML = paginatedItems.map(p => {
       const partId = p.partId ?? p.id;
-      const isLinked = officiallyLinkedPartIds.has(partId);
-      const disabledAttr = isLinked ? 'disabled' : '';
-      const actionBtn = isLinked
-        ? '<button class="btn btn-outline btn-sm btn-unlink-part" data-part-id="' + partId + '" style="color:var(--danger); border-color:var(--danger)">Unlink</button>'
-        : '<button class="btn btn-primary btn-sm btn-link-part" data-part-id="' + partId + '">Link</button>';
-        
       return '<tr>' +
-        '<td style="text-align: center;"><input type="checkbox" class="chk-search-part" data-part-id="' + partId + '" ' + disabledAttr + '></td>' +
         '<td class="part-number">' + (p.partNumber || '-') + '</td>' +
         '<td>' + (p.name || '-') + '</td>' +
         '<td style="text-align: center;">' +
-          '<button class="btn btn-outline btn-sm btn-info-part" data-part-id="' + partId + '" style="margin-right: 4px;" title="Info">' +
+          '<button class="btn btn-outline btn-sm btn-info-part" data-part-id="' + partId + '" title="Info">' +
             '<span class="material-icons-outlined" style="font-size:16px; pointer-events:none;">info</span>' +
           '</button>' +
-          actionBtn +
         '</td>' +
       '</tr>';
     }).join('');
-
-    // Attach info listeners
-    searchTbody.querySelectorAll('.btn-info-part').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const partId = parseInt(e.currentTarget.dataset.partId, 10);
-        openPartInfoModal(partId);
-      });
-    });
-
-    // Use event delegation for link/unlink in search results
-    searchTbody.addEventListener('click', async (e) => {
-      const btn = e.target.closest('.btn-link-part, .btn-unlink-part');
-      if (!btn || !currentBomId) {
-        if (btn && !currentBomId) showToast('Please load a BOM first before linking parts.', 'error');
-        return;
-      }
-
-      const partId = parseInt(btn.dataset.partId, 10);
-      btn.disabled = true;
-
-      if (btn.classList.contains('btn-link-part')) {
-        try {
-          await linkPartToBOM(currentBomId, partId);
-          officiallyLinkedPartIds.add(partId);
-          showToast('Part linked successfully', 'success');
-
-          // Re-render search list to update button
-          displaySearchResults();
-          // Also optionally reload the top list to reflect the new addition
-          tc.querySelector('#btn-load-bom').click();
-        } catch (err) {
-          showToast(err.message || 'Failed to link part', 'error');
-          btn.disabled = false;
-        }
-      } else if (btn.classList.contains('btn-unlink-part')) {
-        try {
-          await unlinkPartFromBOM(currentBomId, partId);
-          officiallyLinkedPartIds.delete(partId);
-          showToast('Part unlinked successfully', 'success');
-
-          // Re-render search list to update button
-          displaySearchResults();
-          // Also optionally reload the top list
-          tc.querySelector('#btn-load-bom').click();
-        } catch (err) {
-          showToast(err.message || 'Failed to unlink part', 'error');
-          btn.disabled = false;
-        }
-      }
-    });
 
     paginationDiv.style.display = 'flex';
     tc.querySelector('#sp-start').textContent = startIndex + 1;
@@ -675,96 +505,37 @@ async function renderPartLinking(tc) {
     tc.querySelector('#sp-total').textContent = allSearchParts.length;
     tc.querySelector('#sp-prev').disabled = currentPage === 1;
     tc.querySelector('#sp-next').disabled = currentPage === totalPages;
-    
-    // Reset selection state for this page
-    chkAllSearch.checked = false;
-    btnLinkSelected.style.display = 'none';
   };
 
-  // Setup bulk linking
-  const chkAllSearch = tc.querySelector('#chk-all-search');
-  const btnLinkSelected = tc.querySelector('#btn-link-selected');
-  
-  chkAllSearch?.addEventListener('change', (e) => {
-    const isChecked = e.target.checked;
-    const checkboxes = searchTbody.querySelectorAll('.chk-search-part:not([disabled])');
-    checkboxes.forEach(chk => chk.checked = isChecked);
-    btnLinkSelected.style.display = Array.from(checkboxes).some(c => c.checked) ? 'block' : 'none';
-  });
-
-  searchTbody.addEventListener('change', (e) => {
-    if (e.target.classList.contains('chk-search-part')) {
-      const checkboxes = searchTbody.querySelectorAll('.chk-search-part:not([disabled])');
-      const anyChecked = Array.from(checkboxes).some(c => c.checked);
-      const allChecked = Array.from(checkboxes).every(c => c.checked);
-      chkAllSearch.checked = allChecked && checkboxes.length > 0;
-      btnLinkSelected.style.display = anyChecked ? 'block' : 'none';
+  // ── Delegated click on Search panel — registered ONCE ──
+  searchTbody.addEventListener('click', async (e) => {
+    if (e.target.closest('.btn-info-part')) {
+      const b = e.target.closest('.btn-info-part');
+      openPartInfoModal(parseInt(b.dataset.partId, 10));
+      return;
     }
-  });
-
-  btnLinkSelected?.addEventListener('click', async () => {
-    const checked = Array.from(searchTbody.querySelectorAll('.chk-search-part:checked'));
-    if (!currentBomId || checked.length === 0) return;
-    
-    btnLinkSelected.disabled = true;
-    btnLinkSelected.textContent = 'Linking...';
-    let successCount = 0;
-    
-    for (const chk of checked) {
-      const partId = parseInt(chk.dataset.partId, 10);
-      try {
-        await linkPartToBOM(currentBomId, partId);
-        officiallyLinkedPartIds.add(partId);
-        successCount++;
-      } catch (err) {
-        showToast('Failed to link part ' + partId + ': ' + err.message, 'error');
-      }
-    }
-    
-    if (successCount > 0) {
-      showToast('Successfully linked ' + successCount + ' part(s)', 'success');
-      tc.querySelector('#btn-load-bom').click(); // Reload BOM list
-      displaySearchResults(); // Update search UI
-    }
-    
-    btnLinkSelected.disabled = false;
-    btnLinkSelected.textContent = 'Link Selected';
-    btnLinkSelected.style.display = 'none';
-    chkAllSearch.checked = false;
   });
 
   tc.querySelector('#sp-prev')?.addEventListener('click', () => {
-    if (currentPage > 1) {
-      currentPage--;
-      displaySearchResults();
-    }
+    if (currentPage > 1) { currentPage--; displaySearchResults(); }
   });
 
   tc.querySelector('#sp-next')?.addEventListener('click', () => {
     const totalPages = Math.ceil(allSearchParts.length / itemsPerPage);
-    if (currentPage < totalPages) {
-      currentPage++;
-      displaySearchResults();
-    }
+    if (currentPage < totalPages) { currentPage++; displaySearchResults(); }
   });
 
   tc.querySelector('#btn-search-parts')?.addEventListener('click', async () => {
     const query = tc.querySelector('#part-link-search-input').value.trim().toLowerCase();
-    searchTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px">Searching parts...</td></tr>';
+    searchTbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px">Searching parts...</td></tr>';
     paginationDiv.style.display = 'none';
-
     try {
       currentPage = 1;
-      // Use the getParts API. We fetch heavily cached data or ask the backend.
-      const defaultParams = { page: 1, pageSize: 10000 };
-      const partsData = await getParts(defaultParams);
+      const partsData = await getParts({ page: 1, pageSize: 10000 });
       let items = Array.isArray(partsData) ? partsData : (partsData?.items || []);
-
-      // Client-side filter based on query (similar to parts.js)
       if (query) {
         items = items.filter(p => (p.name || '').toLowerCase().includes(query) || (p.partNumber || '').toLowerCase().includes(query));
       }
-
       allSearchParts = items;
       displaySearchResults();
     } catch (err) {
@@ -775,7 +546,7 @@ async function renderPartLinking(tc) {
   });
 }
 
-// ─── Team BOMs ───────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Team BOMs ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 async function renderTeamBoms(tc) {
   tc.innerHTML = `
     <div class="card" style="margin-bottom:16px">
@@ -845,7 +616,7 @@ async function renderTeamBoms(tc) {
   });
 }
 
-// ─── BOM Parts ───────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ BOM Parts ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 async function renderBomParts(tc) {
   tc.innerHTML = `
     <div class="card" style="margin-bottom:16px">
@@ -986,7 +757,7 @@ async function renderBomParts(tc) {
   tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px">Enter a BOM ID and click View BOM Parts to load the list.</td></tr>';
 }
 
-// ─── Create BOM Modal ────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Create BOM Modal ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 export async function openCreateBomModal(prefill = {}) {
   // Group number is hardcoded to 0:1
   const groupOpts = '<option value="0:1" selected>01 - General/Root</option>';
@@ -1133,7 +904,7 @@ export async function openCreateBomModal(prefill = {}) {
       return showToast('Please fill all mandatory fields.', 'error');
     }
 
-    // ── Payload shaped to exactly match the API contract ────
+    // ΓöÇΓöÇ Payload shaped to exactly match the API contract ΓöÇΓöÇΓöÇΓöÇ
     const bomPayload = {
       categoryCode: categoryCode || '',
       modelCode: modelCode || '',
@@ -1159,7 +930,7 @@ export async function openCreateBomModal(prefill = {}) {
       showToast(`BOM saved locally. Server error: ${e.message || 'Unknown'}`, 'warning');
     }
 
-    // ── Add to local BOM tree ─────────────────────────────────
+    // ΓöÇΓöÇ Add to local BOM tree ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
     const newNode = {
       id: bomNumber,
       backendId,
@@ -1185,7 +956,7 @@ export async function openCreateBomModal(prefill = {}) {
   });
 }
 
-// ─── Fetch live BOM from server and merge into local tree ─────
+// ΓöÇΓöÇΓöÇ Fetch live BOM from server and merge into local tree ΓöÇΓöÇΓöÇΓöÇΓöÇ
 async function loadServerBomTree(rootBomId) {
   if (!rootBomId) return;
   try {
@@ -1199,7 +970,7 @@ async function loadServerBomTree(rootBomId) {
   }
 }
 
-// ─── BOM Navigator ───────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ BOM Navigator ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function renderBomNav(tc) {
   tc.innerHTML = `
     <div class="grid-sidebar">
@@ -1224,7 +995,7 @@ function renderBomNav(tc) {
             <button class="btn btn-ghost btn-xs" id="btn-where-used" title="Where Used"><span class="material-icons-outlined" style="font-size:16px">account_tree</span></button>
           </div>
         </div>
-        <div class="card-body" id="part-detail-body" style="overflow-y:auto;max-height:calc(100vh - 340px)">Loading…</div>
+        <div class="card-body" id="part-detail-body" style="overflow-y:auto;max-height:calc(100vh - 340px)">LoadingΓÇª</div>
       </div>
     </div>`;
 
@@ -1258,7 +1029,7 @@ function renderBomNav(tc) {
             status: (bom.status || 'Draft').toLowerCase(),
             rev: `Rev ${bom.revisionLetter || 'A'}`,
             devStatus: bom.assemblyStatus || '-',
-            machining: bom.machiningStatus !== undefined ? `${bom.machiningStatus} — Assembly` : '-',
+            machining: bom.machiningStatus !== undefined ? `${bom.machiningStatus} ΓÇö Assembly` : '-',
             weight: '-',
             children: bom.parts ? String(bom.parts.length) : '0',
             model: bom.modelCode || '-',
@@ -1434,7 +1205,7 @@ function renderBomNav(tc) {
   tc.querySelector('#btn-ecr-part')?.addEventListener('click', () => {
     const p = PARTS[selectedPartId];
     if (!p) return showToast('Select a part first', 'warning');
-    showToast(`ECR initiated for ${p.pn}. Redirecting to Change Management…`, 'info');
+    showToast(`ECR initiated for ${p.pn}. Redirecting to Change ManagementΓÇª`, 'info');
     setTimeout(() => navigateTo('change-mgmt'), 1200);
   });
 
@@ -1492,7 +1263,7 @@ function drawBomTree() {
     row.innerHTML = `${indents}${toggleHtml}
       <div class="bom-icon ${node.iconClass}"><span class="material-icons-outlined">${node.icon}</span></div>
       <div class="bom-name"><strong>${node.label}</strong><small>${node.pn}</small></div>
-      <div class="bom-meta"><span class="bom-qty">×${node.qty}</span><span class="badge ${STATUS_BADGE[node.statusKey]} badge-sm">${STATUS_LABEL[node.statusKey]}</span></div>`;
+      <div class="bom-meta"><span class="bom-qty">├ù${node.qty}</span><span class="badge ${STATUS_BADGE[node.statusKey]} badge-sm">${STATUS_LABEL[node.statusKey]}</span></div>`;
     bomContainer.appendChild(row);
 
     row.addEventListener('click', e => {
@@ -1501,7 +1272,7 @@ function drawBomTree() {
       row.classList.add('selected');
       const detailId = node.partRefId || node.id;
       if (detailId && PARTS[detailId]) { selectedPartId = detailId; renderPartDetail(detailId); }
-      else showToast(`Part ${node.pn} — detail view not available in preview`, 'info');
+      else showToast(`Part ${node.pn} ΓÇö detail view not available in preview`, 'info');
     });
 
     if (node.hasChildren) {
@@ -1590,7 +1361,7 @@ function openPartDetailsModal(partId) {
       link.addEventListener('click', e => {
         e.preventDefault();
         const doc = docs[Number(link.getAttribute('data-doc-link'))];
-        if (doc?.name) { showToast(`Opening ${doc.name}…`, 'info'); navigateTo('documents'); }
+        if (doc?.name) { showToast(`Opening ${doc.name}ΓÇª`, 'info'); navigateTo('documents'); }
       });
     });
   }, 50);
@@ -1682,7 +1453,7 @@ async function renderPartDetail(id) {
       <span class="material-icons-outlined" style="font-size:18px;color:${d.type === 'PDF' ? '#DC2626' : d.type === '3D' ? '#2563EB' : d.type === 'Cert' ? '#059669' : '#7C3AED'}">${ICON_TYPE[String(d.type || '').toLowerCase()] || 'description'}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:0.857rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.name}</div>
-        <div style="font-size:0.714rem;color:var(--text-tertiary)">${d.type} · <span class="badge ${STATUS_BADGE[d.status] || 'badge-draft'} badge-sm">${STATUS_LABEL[d.status] || 'Draft'}</span></div>
+        <div style="font-size:0.714rem;color:var(--text-tertiary)">${d.type} ┬╖ <span class="badge ${STATUS_BADGE[d.status] || 'badge-draft'} badge-sm">${STATUS_LABEL[d.status] || 'Draft'}</span></div>
       </div>
       <button class="btn btn-ghost btn-xs view-doc-btn" data-name="${d.name}"><span class="material-icons-outlined" style="font-size:16px">visibility</span></button>
     </div>`).join('') || '<p class="text-xs text-secondary">No documents linked.</p>';
@@ -1737,7 +1508,7 @@ async function renderPartDetail(id) {
   detailPanel.querySelectorAll('.view-doc-btn, .doc-link').forEach(el => {
     el.addEventListener('click', e => {
       const name = e.target.closest('[data-name],[data-doc]')?.dataset.name || e.target.closest('[data-doc]')?.dataset.doc;
-      if (name) showToast(`Opening ${name}…`, 'info');
+      if (name) showToast(`Opening ${name}ΓÇª`, 'info');
     });
   });
   detailPanel.querySelector('#btn-initiate-ecr-detail')?.addEventListener('click', () => {
@@ -1747,7 +1518,7 @@ async function renderPartDetail(id) {
   detailPanel.querySelector('#btn-view-drawing-detail')?.addEventListener('click', () => navigateTo('documents'));
 }
 
-// ─── Part Search (GET from server) ───────────────────────────
+// ΓöÇΓöÇΓöÇ Part Search (GET from server) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 async function renderPartSearch(tc) {
   tc.innerHTML = `
     <div class="card" style="margin-bottom:16px">
@@ -1798,7 +1569,7 @@ async function renderPartSearch(tc) {
             </tr>
           </thead>
           <tbody id="search-results">
-            <tr><td colspan="9" style="text-align:center;padding:20px">Loading parts from server…</td></tr>
+            <tr><td colspan="9" style="text-align:center;padding:20px">Loading parts from serverΓÇª</td></tr>
           </tbody>
         </table>
       </div>
@@ -1896,7 +1667,7 @@ async function renderPartSearch(tc) {
   };
 
   const loadAll = async (params = {}) => {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px">Loading…</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px">LoadingΓÇª</td></tr>';
     try {
       const defaultParams = { page: 1, pageSize: 100, ...params };
       const res = await getParts(defaultParams);
@@ -1910,7 +1681,7 @@ async function renderPartSearch(tc) {
   tc.querySelector('#btn-search-parts')?.addEventListener('click', async () => {
     const inputNumber = tc.querySelector('#part-search-input').value.trim();
     const inputId = tc.querySelector('#part-id-input')?.value?.trim() || '';
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px">Searching…</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px">SearchingΓÇª</td></tr>';
     try {
       if (inputId) {
         const item = await getPartById(inputId);
@@ -2012,7 +1783,7 @@ function openApiPartEditModal(p, onSaved) {
   }, 50);
 }
 
-// ─── BOM Compare ─────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ BOM Compare ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 async function renderBomCompare(tc) {
   tc.innerHTML = `<div style="padding: 20px; text-align: center;">Loading BOMs...</div>`;
 
@@ -2024,7 +1795,7 @@ async function renderBomCompare(tc) {
   }
 
   const items = Array.isArray(boms) ? boms : (boms?.items || []);
-  const optionsHtml = items.map(b => `<option value="${b.id}">${b.bomNumber || b.name || `BOM-${b.id}`} — ${b.description || 'No description'}</option>`).join('');
+  const optionsHtml = items.map(b => `<option value="${b.id}">${b.bomNumber || b.name || `BOM-${b.id}`} ΓÇö ${b.description || 'No description'}</option>`).join('');
 
   tc.innerHTML = `
     <div class="card" style="margin-bottom:16px">
@@ -2091,15 +1862,15 @@ async function renderBomCompare(tc) {
         const partB = mapB[pid];
 
         if (partA && !partB) {
-          diffs.push({ part: partA, aQty: partA.quantity ?? 1, bQty: '—', aRev: partA.revisionLetter || '—', bRev: '—', type: 'REMOVED', style: 'background:#FEF2F2', badge: 'badge-rejected' });
+          diffs.push({ part: partA, aQty: partA.quantity ?? 1, bQty: 'ΓÇö', aRev: partA.revisionLetter || 'ΓÇö', bRev: 'ΓÇö', type: 'REMOVED', style: 'background:#FEF2F2', badge: 'badge-rejected' });
         } else if (!partA && partB) {
-          diffs.push({ part: partB, aQty: '—', bQty: partB.quantity ?? 1, aRev: '—', bRev: partB.revisionLetter || '—', type: 'ADDED', style: 'background:#ECFDF5', badge: 'badge-released' });
+          diffs.push({ part: partB, aQty: 'ΓÇö', bQty: partB.quantity ?? 1, aRev: 'ΓÇö', bRev: partB.revisionLetter || 'ΓÇö', type: 'ADDED', style: 'background:#ECFDF5', badge: 'badge-released' });
         } else {
           // Both have it
           const qA = partA.quantity ?? 1;
           const qB = partB.quantity ?? 1;
-          const rA = partA.revisionLetter || '—';
-          const rB = partB.revisionLetter || '—';
+          const rA = partA.revisionLetter || 'ΓÇö';
+          const rB = partB.revisionLetter || 'ΓÇö';
 
           if (qA !== qB) {
             diffs.push({ part: partA, aQty: qA, bQty: qB, aRev: rA, bRev: rB, type: 'QTY CHANGE', style: 'background:#FFFBEB', badge: 'badge-review' });
@@ -2140,7 +1911,7 @@ async function renderBomCompare(tc) {
   });
 }
 
-// ─── Create Part ─────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Create Part ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 async function renderCreatePart(tc) {
   let standardGroups = [];
   try {
@@ -2156,7 +1927,7 @@ async function renderCreatePart(tc) {
   tc.innerHTML = `
     <div class="card">
       <div class="card-header">
-        <div class="card-title"><span class="material-icons-outlined">add_circle</span>Create New Part — 11-Digit Part Number</div>
+        <div class="card-title"><span class="material-icons-outlined">add_circle</span>Create New Part ΓÇö 11-Digit Part Number</div>
       </div>
       <div class="card-body">
         <div style="background:var(--brand-primary-lighter);border:1px solid var(--brand-primary);border-radius:var(--radius-md);padding:14px 18px;margin-bottom:24px;display:flex;align-items:center;gap:14px">
@@ -2167,7 +1938,7 @@ async function renderCreatePart(tc) {
           </div>
           <div style="margin-left:auto;text-align:right">
             <div style="font-size:0.786rem;color:var(--text-secondary)">Generated Part Number</div>
-            <div style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700;letter-spacing:2px;color:var(--brand-primary)" id="pn-final">—</div>
+            <div style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700;letter-spacing:2px;color:var(--brand-primary)" id="pn-final">ΓÇö</div>
           </div>
         </div>
 
@@ -2260,7 +2031,7 @@ async function renderCreatePart(tc) {
           <div class="form-group" id="send-email-group" style="display:none">
             <label class="form-label">Send Notification Email?</label>
             <select class="form-select" id="send-email-select">
-              <option value="">Select…</option>
+              <option value="">SelectΓÇª</option>
               <option value="yes">Yes</option>
               <option value="no">No</option>
             </select>
@@ -2275,7 +2046,7 @@ async function renderCreatePart(tc) {
 
         <div class="form-group" style="margin-top:8px">
           <label class="form-label">Description / Technical Notes</label>
-          <textarea class="form-input" id="cp-desc" rows="3" placeholder="Additional technical specifications or notes…" style="resize:vertical"></textarea>
+          <textarea class="form-input" id="cp-desc" rows="3" placeholder="Additional technical specifications or notesΓÇª" style="resize:vertical"></textarea>
         </div>
 
         <div style="display:flex;gap:12px;justify-content:flex-end">
@@ -2304,7 +2075,7 @@ async function renderCreatePart(tc) {
       devStatusCode: tc.querySelector('#cp-dev-status')?.value || 'X',
     });
     const el = tc.querySelector('#pn-final');
-    if (el) el.textContent = pn || '—';
+    if (el) el.textContent = pn || 'ΓÇö';
   };
 
   tc.querySelectorAll('#cp-cat, #cp-model, #cp-group, #cp-machine, #cp-revision, #cp-dev-status')
@@ -2402,7 +2173,7 @@ async function renderCreatePart(tc) {
     };
 
     const submitBtn = tc.querySelector('#cp-submit');
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:16px">autorenew</span>Creating…'; }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:16px">autorenew</span>CreatingΓÇª'; }
 
     try {
       const resp = await createPart(payload);
@@ -2417,7 +2188,7 @@ async function renderCreatePart(tc) {
   updatePN();
 }
 
-// ─── Link BOM Modal ───────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Link BOM Modal ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 function openLinkBomModal() {
   document.querySelector('.modal-overlay')?.remove();
   const modal = document.createElement('div');
@@ -2455,7 +2226,7 @@ function openLinkBomModal() {
   getAllBomsWithParts().then(boms => {
     const items = Array.isArray(boms) ? boms : (boms?.items || []);
     items.forEach(b => {
-      const label = `${b.name || b.bomNumber || '-'}${b.description ? ' — ' + b.description : ''}`;
+      const label = `${b.name || b.bomNumber || '-'}${b.description ? ' ΓÇö ' + b.description : ''}`;
       bomMap[label] = b.id;
       const opt = document.createElement('option');
       opt.value = label;
