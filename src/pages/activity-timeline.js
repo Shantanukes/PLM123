@@ -74,8 +74,8 @@ export async function renderActivityTimeline(container) {
   const formatDate = (isoString) => {
     try {
       const d = new Date(isoString);
-      return d.toLocaleString(undefined, { 
-        month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'
+      return d.toLocaleString(undefined, {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
       });
     } catch {
       return isoString;

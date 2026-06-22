@@ -35,7 +35,7 @@ export async function renderExecutiveAnalytics(container) {
 
   // Safe fallback to 0 if data fields are missing
   const safeData = new Proxy(data, {
-    get: function(target, prop) {
+    get: function (target, prop) {
       return target[prop] || 0;
     }
   });
