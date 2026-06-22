@@ -2267,4 +2267,4 @@ function openLinkBomModal() {
       }
     });
   }, 50);
-}
+} 

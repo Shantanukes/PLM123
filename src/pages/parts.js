@@ -1258,18 +1258,18 @@ function openRevisePartModal(p, onRevised) {
       const revDigits = document.getElementById('revise-rev-digits')?.value?.trim() || null;
       const reason = document.getElementById('revise-reason')?.value?.trim() || null;
       const fileInput = document.getElementById('revise-drawing-file');
-      
+
       if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
         return showToast('Drawing File is mandatory for part revision.', 'error');
       }
-      
+
       const file = fileInput.files[0];
-      
+
       const preview = document.getElementById('revise-response-preview');
       const btn = document.getElementById('revise-confirm');
       btn.disabled = true;
       btn.textContent = 'Revising…';
-      
+
       const formData = new FormData();
       formData.append('PartId', p.id);
       if (devCode) formData.append('NewDevStatusCode', devCode);
@@ -1456,7 +1456,6 @@ async function renderCreatePart(tc) {
           <div class="form-group">
             <label class="form-label">Release Flag <span style="color:#DC2626">*</span></label>
             <select class="form-select" id="cp-release-flag">
-              <option value="">Select Release Flag</option>
               <option value="0">EC</option>
               <option value="1">CD</option>
               <option value="2">Proto</option>
@@ -1778,24 +1777,24 @@ async function renderPartRevision(tc) {
   tc.querySelector('#btn-search-revision').addEventListener('click', async () => {
     const input = tc.querySelector('#part-revision-input').value.trim();
     if (!input) return showToast('Please enter a Part ID or Part Number', 'warning');
-    
+
     const isId = /^\d+$/.test(input);
     const endpoint = isId ? `/api/Parts/${input}/revisions` : `/api/Parts/number/${encodeURIComponent(input)}/revisions`;
-    
+
     const btn = tc.querySelector('#btn-search-revision');
     btn.disabled = true;
     btn.textContent = 'Searching...';
-    
+
     try {
       const res = await authFetch(endpoint);
       if (!res.ok) throw new Error('Failed to fetch revisions');
       const data = await res.json();
-      
+
       tc.querySelector('#revision-results-container').style.display = 'block';
       tc.querySelector('#rev-base-identifier').textContent = data.basePartIdentifier || 'Unknown Base Part';
       tc.querySelector('#rev-total-count').textContent = data.totalRevisions || '0';
       tc.querySelector('#rev-current-pn').textContent = data.currentRevisionPartNumber || '-';
-      
+
       const tbody = tc.querySelector('#revision-table-body');
       if (data.revisions && data.revisions.length > 0) {
         tbody.innerHTML = data.revisions.map(r => `
@@ -1813,7 +1812,7 @@ async function renderPartRevision(tc) {
       } else {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px">No revisions found.</td></tr>';
       }
-      
+
     } catch (err) {
       showToast(err.message, 'error');
       tc.querySelector('#revision-results-container').style.display = 'none';
