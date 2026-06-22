@@ -121,6 +121,28 @@ export async function getBomParts(id) {
   if (!response.ok) throw new Error(`Failed to fetch BOM parts (${response.status})`);
   return response.json();
 }
+
+// POST /api/BOM/{id}/approve — Approve BOM
+export async function approveBom(bomId, payload) {
+  const response = await authFetch(`/api/BOM/${bomId}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) throw new Error(`Failed to approve BOM (${response.status})`);
+  return response.json();
+}
+
+// POST /api/BOM/{id}/reject — Reject BOM
+export async function rejectBom(bomId, payload) {
+  const response = await authFetch(`/api/BOM/${bomId}/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) throw new Error(`Failed to reject BOM (${response.status})`);
+  return response.json();
+}
 // GET /api/BOM — Get all BOMs
 export async function getBoms() {
   const endpoints = ['/api/BOM', '/api/BOMs', '/api/bom', '/api/boms'];

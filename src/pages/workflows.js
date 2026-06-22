@@ -1,5 +1,6 @@
 import { showToast, showModal, navigateTo } from '../main.js';
 import { assignWorkflow, fetchWorkflows, fetchCurrentApprovalStage, fetchPendingApprovals, approvePartNumber, rejectPartNumber, approveDrawing, rejectDrawing, authFetch, fetchPartApprovalHistory, fetchDesignerTasks, getPartById, updatePart } from '../api/index.js';
+import { approveBom, rejectBom } from '../api/bom.js';
 
 const RUNTIME_KEY = 'kg_plm_runtime';
 const SESSION_USER_KEY = 'kg_plm_session_user';
@@ -464,7 +465,7 @@ async function renderMyTasks(tc) {
           const data = await res.json();
           const itemType = e.target.dataset.type;
           const resolvedType = data.approvalType || itemType;
-          const isApprovable = resolvedType === 'PartNumber' || resolvedType?.toLowerCase() === 'drawing';
+          const isApprovable = resolvedType === 'PartNumber' || resolvedType?.toLowerCase() === 'drawing' || resolvedType === 'BOM';
           const currentUserRole = (getCurrentUserRole() || '').toLowerCase().replace(/\s/g, '');
           const isDesignerRole = currentUserRole === 'designer';
           const isDesignerRejected = isDesignerRole && ((data.status || '').toLowerCase() === 'rejected' || (data.result || '').toLowerCase() === 'rejected' || (data.currentApprovalStage || '').toLowerCase().includes('reject'));
@@ -481,6 +482,7 @@ async function renderMyTasks(tc) {
                    <label class="form-label">Comments</label>
                    <textarea class="form-input" id="stage-comments" rows="2" placeholder="Enter approval/rejection comments..."></textarea>
                  </div>
+                 ${resolvedType !== 'BOM' ? `
                  <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
                    <input type="checkbox" id="stage-revert-designer" />
                    <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer </label>
@@ -509,6 +511,7 @@ async function renderMyTasks(tc) {
                      <option value="0">Select User...</option>
                    </select>
                  </div>` : ''}
+                 ` : ''}
                ` : ''}
              </div>`,
             `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
@@ -597,7 +600,17 @@ async function renderMyTasks(tc) {
                   protoStudyUserId,
                   protoApprovalUserId
                 };
-                if (resolvedType === 'PartNumber') {
+                if (resolvedType === 'BOM') {
+                  const bomPayload = {
+                    comments,
+                    revertToDesigner: false,
+                    revertThroughPM: false,
+                    selectedPMId: 0,
+                    protoStudyUserId: 0,
+                    protoApprovalUserId: 0
+                  };
+                  await approveBom(entityId, bomPayload);
+                } else if (resolvedType === 'PartNumber') {
                   await approvePartNumber(entityId, payload);
                 } else {
                   await approveDrawing(entityId, payload);
@@ -645,7 +658,17 @@ async function renderMyTasks(tc) {
                   protoStudyUserId,
                   protoApprovalUserId
                 };
-                if (resolvedType === 'PartNumber') {
+                if (resolvedType === 'BOM') {
+                  const bomPayload = {
+                    comments,
+                    revertToDesigner: false,
+                    revertThroughPM: false,
+                    selectedPMId: 0,
+                    protoStudyUserId: 0,
+                    protoApprovalUserId: 0
+                  };
+                  await rejectBom(entityId, bomPayload);
+                } else if (resolvedType === 'PartNumber') {
                   await rejectPartNumber(entityId, payload);
                 } else {
                   await rejectDrawing(entityId, payload);
@@ -810,6 +833,7 @@ async function renderInProgress(tc) {
                    <label class="form-label">Comments</label>
                    <textarea class="form-input" id="stage-comments" rows="2" placeholder="Enter approval/rejection comments..."></textarea>
                  </div>
+                 ${resolvedType !== 'BOM' ? `
                  <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
                    <input type="checkbox" id="stage-revert-designer" />
                    <label for="stage-revert-designer" style="font-size: 13px;">Revert to Designer </label>
@@ -838,6 +862,7 @@ async function renderInProgress(tc) {
                      <option value="0">Select User...</option>
                    </select>
                  </div>` : ''}
+                 ` : ''}
                ` : ''}
              </div>`,
             `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
@@ -926,7 +951,17 @@ async function renderInProgress(tc) {
                   protoStudyUserId,
                   protoApprovalUserId
                 };
-                if (resolvedType === 'PartNumber') {
+                if (resolvedType === 'BOM') {
+                  const bomPayload = {
+                    comments,
+                    revertToDesigner: false,
+                    revertThroughPM: false,
+                    selectedPMId: 0,
+                    protoStudyUserId: 0,
+                    protoApprovalUserId: 0
+                  };
+                  await approveBom(entityId, bomPayload);
+                } else if (resolvedType === 'PartNumber') {
                   await approvePartNumber(entityId, payload);
                 } else {
                   await approveDrawing(entityId, payload);
@@ -974,7 +1009,17 @@ async function renderInProgress(tc) {
                   protoStudyUserId,
                   protoApprovalUserId
                 };
-                if (resolvedType === 'PartNumber') {
+                if (resolvedType === 'BOM') {
+                  const bomPayload = {
+                    comments,
+                    revertToDesigner: false,
+                    revertThroughPM: false,
+                    selectedPMId: 0,
+                    protoStudyUserId: 0,
+                    protoApprovalUserId: 0
+                  };
+                  await rejectBom(entityId, bomPayload);
+                } else if (resolvedType === 'PartNumber') {
                   await rejectPartNumber(entityId, payload);
                 } else {
                   await rejectDrawing(entityId, payload);
