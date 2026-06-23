@@ -33,7 +33,6 @@ import { renderTicketRaise } from './pages/ticket-raise.js';
 import { renderTicketHistory } from './pages/ticket-history.js';
 import { renderHomologation } from './pages/homologation.js';
 import { renderUploadDrawing } from './pages/upload-drawing.js';
-import { seedMockRuntimeData } from './mock-data.js';
 
 // Executive Pages
 import { renderExecutiveAnalytics } from './pages/executive-analytics.js';
@@ -286,54 +285,182 @@ function renderResetPasswordView() {
   const requiresAuth = !hasToken;
 
   container.innerHTML = `
-    <h2>Set New Password</h2>
-    <p class="login-subtitle">Create a new secure password to access your PLM account.</p>
-    <form id="reset-password-form" autocomplete="off">
-      <div class="form-group">
-        <label>Account</label>
-        <div class="form-input" style="display:flex;align-items:center;gap:8px;background:var(--bg-muted)">
-          <span class="material-icons-outlined" style="font-size:18px;color:var(--text-secondary)">person</span>
-          <span>${email || 'Account from reset link'}</span>
-        </div>
+    <div style="max-width: 550px; margin: 0 auto; width: 100%;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Set New Password</h2>
+        <p class="login-subtitle" style="color: var(--text-secondary); font-size: 14px;">Create a strong password to securely access your PLM account.</p>
       </div>
-      <div class="form-group">
-        <label>Reset Token</label>
-        <div class="form-input" style="display:flex;align-items:center;gap:8px;background:var(--bg-muted)">
-          <span class="material-icons-outlined" style="font-size:18px;color:var(--text-secondary)">key</span>
-          <span>${hasToken ? maskToken(token) : 'No token provided'}</span>
-        </div>
+
+      <form id="reset-password-form" autocomplete="off" style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <div id="reset-error-msg" style="display: none; background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 500; border: 1px solid rgba(239, 68, 68, 0.2); align-items: center; gap: 8px;">
+        <span class="material-icons-outlined" style="font-size: 16px;">error_outline</span>
+        <span id="reset-error-text"></span>
       </div>
+
+      <!-- Account Info -->
+      ${email ? `
+      <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <span class="material-icons-outlined" style="font-size: 20px; color: var(--text-secondary);">person</span>
+        <span style="font-weight: 600; color: var(--text-primary); font-size: 15px; word-break: break-all;">
+          ${email}
+        </span>
+      </div>
+      ` : ''}
+
       ${requiresAuth ? `
-        <div class="form-group">
-          <label for="reset-current-password">Current Password</label>
-          <div class="input-icon-wrap">
-            <span class="material-icons-outlined">lock_outline</span>
-            <input type="password" id="reset-current-password" placeholder="Enter current password" required />
+        <div class="form-group floating-label-group">
+          <div class="input-icon-wrap" style="position: relative;">
+            <span class="material-icons-outlined input-icon" style="position: absolute; left: 16px; top: 12px;">lock_outline</span>
+            <input type="password" id="reset-current-password" placeholder=" " required style="width: 100%; padding: 12px 16px 12px 48px; border-radius: 8px; border: 1px solid var(--border-color); height: 48px; background: var(--bg-muted);"/>
+            <label for="reset-current-password" style="position: absolute; left: 48px; top: 14px; color: var(--text-secondary); transition: all 0.2s;">Current Password</label>
+            <button type="button" class="pwd-toggle material-icons-outlined" tabindex="-1" style="position: absolute; right: 16px; top: 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer;">visibility</button>
           </div>
         </div>
       ` : ''}
-      <div class="form-group">
-        <label for="reset-new-password">New Password</label>
-        <div class="input-icon-wrap">
-          <span class="material-icons-outlined">lock</span>
-          <input type="password" id="reset-new-password" placeholder="Enter new password" required />
+
+      <div class="form-group floating-label-group">
+        <div class="input-icon-wrap" style="position: relative;">
+          <span class="material-icons-outlined input-icon" style="position: absolute; left: 16px; top: 12px;">lock</span>
+          <input type="password" id="reset-new-password" placeholder=" " required style="width: 100%; padding: 12px 16px 12px 48px; border-radius: 8px; border: 1px solid var(--border-color); height: 48px; background: var(--bg-muted);"/>
+          <label for="reset-new-password" style="position: absolute; left: 48px; top: 14px; color: var(--text-secondary); transition: all 0.2s;">New Password</label>
+          <button type="button" class="pwd-toggle material-icons-outlined" tabindex="-1" style="position: absolute; right: 16px; top: 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer;">visibility</button>
         </div>
       </div>
-      <div class="form-group">
-        <label for="reset-confirm-password">Confirm Password</label>
-        <div class="input-icon-wrap">
-          <span class="material-icons-outlined">task_alt</span>
-          <input type="password" id="reset-confirm-password" placeholder="Re-enter new password" required />
+
+      <!-- Password Strength & Requirements -->
+      <div id="pwd-strength-container" style="background: rgba(0,0,0,0.02); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); display: none;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600;">
+          <span style="color: var(--text-secondary);">Password Strength</span>
+          <span id="pwd-strength-text" style="color: var(--text-primary); transition: color 0.3s;">Weak</span>
+        </div>
+        <div style="height: 6px; background: var(--border-color); border-radius: 4px; overflow: hidden; margin-bottom: 16px; display: flex;">
+          <div id="pwd-strength-bar" style="height: 100%; width: 0%; background: #ef4444; transition: width 0.3s ease, background 0.3s ease;"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #ffffff;">
+          <div id="req-len" style="display: flex; align-items: center; gap: 6px;"><span class="material-icons-outlined" style="font-size: 14px;">radio_button_unchecked</span> At least 8 chars</div>
+          <div id="req-up" style="display: flex; align-items: center; gap: 6px;"><span class="material-icons-outlined" style="font-size: 14px;">radio_button_unchecked</span> One uppercase</div>
+          <div id="req-low" style="display: flex; align-items: center; gap: 6px;"><span class="material-icons-outlined" style="font-size: 14px;">radio_button_unchecked</span> One lowercase</div>
+          <div id="req-num" style="display: flex; align-items: center; gap: 6px;"><span class="material-icons-outlined" style="font-size: 14px;">radio_button_unchecked</span> One number</div>
+          <div id="req-spc" style="display: flex; align-items: center; gap: 6px;"><span class="material-icons-outlined" style="font-size: 14px;">radio_button_unchecked</span> One special</div>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary btn-full" ${hasToken || getAccessToken() ? '' : 'disabled'}>
-        <span>Update Password</span>
-        <span class="material-icons-outlined icon-18">verified</span>
-      </button>
-      <button type="button" class="btn btn-outline btn-full mt-12" id="back-to-login-from-reset">Back to Login</button>
-      <p class="text-xs text-secondary" style="margin-top:12px">For security, current passwords are never shown or auto-filled.</p>
-    </form>
+
+      <div class="form-group floating-label-group">
+        <div class="input-icon-wrap" style="position: relative;">
+          <span class="material-icons-outlined input-icon" style="position: absolute; left: 16px; top: 12px;">task_alt</span>
+          <input type="password" id="reset-confirm-password" placeholder=" " required style="width: 100%; padding: 12px 16px 12px 48px; border-radius: 8px; border: 1px solid var(--border-color); height: 48px; background: var(--bg-muted);"/>
+          <label for="reset-confirm-password" style="position: absolute; left: 48px; top: 14px; color: var(--text-secondary); transition: all 0.2s;">Confirm Password</label>
+          <button type="button" class="pwd-toggle material-icons-outlined" tabindex="-1" style="position: absolute; right: 16px; top: 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer;">visibility</button>
+        </div>
+      </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 12px; margin-top: 8px; flex-direction: column;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; height: 48px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);" ${hasToken || getAccessToken() ? '' : 'disabled'}>
+            <span>Update Password</span>
+            <span class="material-icons-outlined icon-18">verified</span>
+          </button>
+          <button type="button" class="btn btn-outline" id="back-to-login-from-reset" style="width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; font-weight: 600; font-size: 15px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #ffffff; transition: background 0.2s, border 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+            <span>Back to Login</span>
+          </button>
+        </div>
+      </form>
+    </div>
   `;
+
+  // Attach view toggle for passwords
+  document.querySelectorAll('.pwd-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const input = e.target.parentElement.querySelector('input');
+      if (input.type === 'password') {
+        input.type = 'text';
+        e.target.textContent = 'visibility_off';
+      } else {
+        input.type = 'password';
+        e.target.textContent = 'visibility';
+      }
+    });
+  });
+
+  // Attach floating label logic (simple via focus/blur or rely on existing css if placeholder is " ")
+  // The placeholder=" " enables the :placeholder-shown pseudo selector in CSS if defined.
+
+  // Password strength logic
+  const newPwdInput = document.getElementById('reset-new-password');
+  const strengthContainer = document.getElementById('pwd-strength-container');
+  const strengthBar = document.getElementById('pwd-strength-bar');
+  const strengthText = document.getElementById('pwd-strength-text');
+  
+  const reqLen = document.getElementById('req-len');
+  const reqUp = document.getElementById('req-up');
+  const reqLow = document.getElementById('req-low');
+  const reqNum = document.getElementById('req-num');
+  const reqSpc = document.getElementById('req-spc');
+
+  newPwdInput?.addEventListener('input', (e) => {
+    const val = e.target.value;
+    if (val.length > 0) {
+      strengthContainer.style.display = 'block';
+    } else {
+      strengthContainer.style.display = 'none';
+    }
+
+    const hasLen = val.length >= 8;
+    const hasUp = /[A-Z]/.test(val);
+    const hasLow = /[a-z]/.test(val);
+    const hasNum = /[0-9]/.test(val);
+    const hasSpc = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+
+    const updateReq = (el, met) => {
+      const icon = el.querySelector('span');
+      if (met) {
+        icon.textContent = 'check_circle';
+        icon.style.color = '#10b981';
+        el.style.color = '#ffffff';
+      } else {
+        icon.textContent = 'radio_button_unchecked';
+        icon.style.color = 'inherit';
+        el.style.color = '#ffffff';
+      }
+    };
+
+    updateReq(reqLen, hasLen);
+    updateReq(reqUp, hasUp);
+    updateReq(reqLow, hasLow);
+    updateReq(reqNum, hasNum);
+    updateReq(reqSpc, hasSpc);
+
+    let score = 0;
+    if (hasLen) score++;
+    if (hasUp) score++;
+    if (hasLow) score++;
+    if (hasNum) score++;
+    if (hasSpc) score++;
+
+    let width = '0%';
+    let color = '#ef4444';
+    let text = 'Weak';
+
+    if (score <= 2) {
+      width = '33%';
+      color = '#ef4444'; // Red
+      text = 'Weak';
+    } else if (score === 3 || score === 4) {
+      width = '66%';
+      color = '#f59e0b'; // Amber
+      text = 'Medium';
+    } else if (score === 5) {
+      width = '100%';
+      color = '#10b981'; // Green
+      text = 'Strong';
+    }
+
+    strengthBar.style.width = width;
+    strengthBar.style.background = color;
+    strengthText.textContent = text;
+    strengthText.style.color = color;
+  });
 
   document.getElementById('back-to-login-from-reset')?.addEventListener('click', resetToLoginView);
 
@@ -344,17 +471,36 @@ function renderResetPasswordView() {
     const confirmPassword = document.getElementById('reset-confirm-password')?.value || '';
     const apiBaseUrl = getStoredApiBaseUrl();
 
-    if (!apiBaseUrl) return showToast('Backend API base URL is required.', 'warning');
-    if (requiresAuth && !getAccessToken()) return showToast('Login required to change password.', 'warning');
-    if (requiresAuth && !currentPassword) return showToast('Current password is required.', 'warning');
-    if (!newPassword || !confirmPassword) return showToast('Fill both password fields.', 'warning');
-    if (newPassword !== confirmPassword) return showToast('New password and confirm password must match.', 'warning');
-    if (newPassword.length < 8) return showToast('Password must be at least 8 characters.', 'warning');
+    const errorContainer = document.getElementById('reset-error-msg');
+    const errorText = document.getElementById('reset-error-text');
+    
+    const showError = (msg) => {
+      errorText.textContent = msg;
+      errorContainer.style.display = 'flex';
+    };
+
+    errorContainer.style.display = 'none';
+
+    if (!apiBaseUrl) return showError('Backend API base URL is required.');
+    if (requiresAuth && !getAccessToken()) return showError('Session expired. Login required to change password.');
+    if (requiresAuth && !currentPassword) return showError('Current password is required.');
+    if (!newPassword || !confirmPassword) return showError('Please fill all password fields.');
+    if (newPassword !== confirmPassword) return showError('New password and confirm password do not match.');
+    
+    // Check password strength explicitly
+    const hasLen = newPassword.length >= 8;
+    const hasUp = /[A-Z]/.test(newPassword);
+    const hasLow = /[a-z]/.test(newPassword);
+    const hasNum = /[0-9]/.test(newPassword);
+    const hasSpc = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+    if (!hasLen || !hasUp || !hasLow || !hasNum || !hasSpc) {
+      return showError('Please meet all password requirements before updating.');
+    }
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:18px;animation:spin 0.6s linear infinite">autorenew</span> Updating...';
+      submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:18px;animation:spin 0.6s linear infinite">autorenew</span> <span>Updating...</span>';
     }
 
     try {
@@ -365,14 +511,15 @@ function renderResetPasswordView() {
         confirmPassword,
         token: hasToken ? token : '',
       });
+      // The view redirects/shows success via AUTH_FLASH_MESSAGE_KEY or other method.
       localStorage.setItem(AUTH_FLASH_MESSAGE_KEY, 'Password updated successfully. Please login with your new password.');
       resetToLoginView();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to update password.';
-      showToast(message, 'error');
+      showError(message);
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span class="btn-text">Update Password</span><span class="material-icons-outlined icon-18 btn-icon">verified</span>';
+        submitBtn.innerHTML = '<span>Update Password</span><span class="material-icons-outlined icon-18">verified</span>';
       }
     }
   });
@@ -409,8 +556,6 @@ function applyRoleAccessUI() {
 
 // ─── Init ───
 function init() {
-  seedMockRuntimeData();
-
   consumeAuthFlashMessage();
 
   const mode = getCurrentAuthMode();
