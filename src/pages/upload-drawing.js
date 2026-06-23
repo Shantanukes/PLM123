@@ -66,10 +66,11 @@ export function renderUploadDrawing(container, prefillPartNumber = '') {
             <label class="form-label">Type</label>
             <select class="form-select" id="ud-type">
               <option value="0">Drawing</option>
-              <option value="1">Specification</option>
-              <option value="2">TestReport</option>
+              <option value="1">Specifications</option>
+              <option value="2">Test Report</option>
               <option value="3">Manual</option>
               <option value="4">Other</option>
+              <option value="5">Homologation</option>
             </select>
           </div>
           <div class="form-group">
