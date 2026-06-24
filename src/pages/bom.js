@@ -1011,7 +1011,7 @@ export async function openCreateBomModal(prefill = {}) {
       return showToast('Please fill all mandatory fields.', 'error');
     }
 
-    // ΓöÇΓöÇ Payload shaped to exactly match the API contract ΓöÇΓöÇΓöÇΓöÇ
+    // ─── Payload shaped to exactly match the API contract ───
     const bomPayload = {
       categoryCode: categoryCode || '',
       modelCode: modelCode || '',
@@ -1034,7 +1034,8 @@ export async function openCreateBomModal(prefill = {}) {
       showToast(`BOM ${bomNumber} created on server.`, 'success');
     } catch (e) {
       console.error('[BOM CREATE] Server error:', e);
-      showToast(`BOM saved locally. Server error: ${e.message || 'Unknown'}`, 'warning');
+      showToast(e.message || 'Server error creating BOM', 'error');
+      return;
     }
 
     // ΓöÇΓöÇ Add to local BOM tree ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
