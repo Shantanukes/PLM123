@@ -1461,7 +1461,7 @@ async function renderCreatePart(tc) {
               <option value="2">Proto</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="cp-ee-release-group" style="display:none">
             <label class="form-label">EE Release</label>
             <select class="form-select" id="cp-ee-release">
               <option value="0">Sample</option>
@@ -1557,6 +1557,18 @@ async function renderCreatePart(tc) {
   tc.querySelectorAll('#cp-cat, #cp-model, #cp-group, #cp-machine, #cp-revision, #cp-dev-status')
     .forEach(el => el.addEventListener('change', updatePN));
   updatePN();
+
+  // Show EE Release only when group number is in range 51–59
+  const toggleEeRelease = () => {
+    const groupVal = tc.querySelector('#cp-group')?.value || '';
+    const [gc, sc] = groupVal.split(':');
+    const combined = Number(gc || 0) * 10 + Number(sc || 0);
+    const show = combined >= 51 && combined <= 59;
+    const eeGroup = tc.querySelector('#cp-ee-release-group');
+    if (eeGroup) eeGroup.style.display = show ? 'block' : 'none';
+  };
+  tc.querySelector('#cp-group')?.addEventListener('change', toggleEeRelease);
+  toggleEeRelease();
 
   // Part name: uppercase
   tc.querySelector('#cp-name')?.addEventListener('input', e => {
