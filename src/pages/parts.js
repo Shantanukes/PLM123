@@ -267,7 +267,7 @@ export function renderParts(container) {
       <button class="tab-btn" data-tab="part-revision">Part Revision</button>
       ${isProjectManager ? `<button class="tab-btn" data-tab="part-requests">Part Requests</button>` : ''}
       ${isProjectManager ? `<button class="tab-btn" data-tab="pending-parts">Pending Parts</button>` : ''}
-      <!-- <button class="tab-btn" data-tab="create-part">Create Part</button> -->
+      ${isProjectManager ? `<button class="tab-btn" data-tab="create-part">Create Part</button>` : ''}
     </div>
 
     <div id="tab-content"></div>
@@ -314,9 +314,9 @@ export function renderParts(container) {
           const bomIdStr = document.getElementById('req-part-bomid').value.trim();
           const name = document.getElementById('req-part-name').value.trim();
           const description = document.getElementById('req-part-desc').value.trim();
-          
+
           if (!bomIdStr || !name || !description) return showToast('Please fill all mandatory fields.', 'error');
-          
+
           const bomId = parseInt(bomIdStr, 10);
           if (isNaN(bomId)) return showToast('BOM ID must be a valid number.', 'error');
 
@@ -331,7 +331,7 @@ export function renderParts(container) {
               document.querySelector('.modal-overlay')?.remove();
             } else {
               let errorText = '';
-              try { errorText = await res.text(); } catch(e) {}
+              try { errorText = await res.text(); } catch (e) { }
               console.error('Server error response:', errorText);
               showToast('Failed to submit request. Server responded with: ' + res.status + ' ' + (errorText.substring(0, 50) || res.statusText), 'error');
             }
@@ -358,7 +358,7 @@ async function renderPartRequests(tc) {
     const res = await authFetch('/api/PartRequests');
     if (!res.ok) throw new Error('Failed to fetch part requests');
     const data = await res.json();
-    
+
     if (!data || data.length === 0) {
       tc.innerHTML = `<div class="empty-state"><span class="material-icons-outlined" style="font-size:48px; color:var(--text-tertiary)">inbox</span><p>No part requests found.</p></div>`;
       return;
@@ -415,7 +415,7 @@ async function renderPendingParts(tc) {
     const res = await authFetch('/api/PartRequests/pending');
     if (!res.ok) throw new Error('Failed to fetch pending parts');
     const data = await res.json();
-    
+
     if (!data || data.length === 0) {
       tc.innerHTML = `<div class="empty-state"><span class="material-icons-outlined" style="font-size:48px; color:var(--text-tertiary)">inbox</span><p>No pending parts found.</p></div>`;
       return;
@@ -469,20 +469,10 @@ async function renderPendingParts(tc) {
     `;
 
     tc.querySelectorAll('.btn-approve-part').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+      btn.addEventListener('click', (e) => {
         const id = e.currentTarget.dataset.id;
-        try {
-          // You may need to change 'POST' or the endpoint depending on the backend implementation
-          const res = await authFetch(`/api/PartRequests/${id}/approve`, { method: 'POST' });
-          if (res.ok) {
-            showToast('Part request approved/created successfully.', 'success');
-            renderPendingParts(tc);
-          } else {
-            showToast('Failed to approve part request.', 'error');
-          }
-        } catch(err) {
-          showToast('Error approving: ' + err.message, 'error');
-        }
+        const req = data.find(r => r.id == id);
+        if (req) openApproveRequestModal(req, tc);
       });
     });
 
@@ -490,7 +480,6 @@ async function renderPendingParts(tc) {
       btn.addEventListener('click', async (e) => {
         const id = e.currentTarget.dataset.id;
         try {
-           // You may need to change 'POST' or the endpoint depending on the backend implementation
           const res = await authFetch(`/api/PartRequests/${id}/reject`, { method: 'POST' });
           if (res.ok) {
             showToast('Part request rejected successfully.', 'success');
@@ -498,7 +487,7 @@ async function renderPendingParts(tc) {
           } else {
             showToast('Failed to reject part request.', 'error');
           }
-        } catch(err) {
+        } catch (err) {
           showToast('Error rejecting: ' + err.message, 'error');
         }
       });
@@ -507,6 +496,175 @@ async function renderPendingParts(tc) {
     console.error('Error fetching pending parts:', err);
     tc.innerHTML = `<div class="empty-state"><span class="material-icons-outlined" style="font-size:48px; color:#DC2626">error</span><p>Could not load pending parts.</p><p style="font-size:12px;color:var(--text-tertiary)">${err.message}</p></div>`;
   }
+}
+
+async function openApproveRequestModal(req, tc) {
+  let groupOpts = '';
+  try {
+    const res = await authFetch('/api/Lookups/part-groups');
+    if (res.ok) {
+      const allGroups = await res.json();
+      const standardGroups = allGroups.filter(g => !g.isHardwareGroup);
+      groupOpts = standardGroups.map(g =>
+        `<option value="${g.groupCode}:${g.subGroupCode}">${g.groupCode}${g.subGroupCode} - ${g.name}</option>`
+      ).join('');
+    }
+  } catch (err) {
+    console.error('Error fetching group numbers:', err);
+  }
+
+  showModal(
+    'Approve & Create Part',
+    `<div class="detail-grid">
+      <div class="form-group">
+        <label class="form-label">Product Category <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="appr-cat-code">
+          ${optionsHtml(PRODUCT_CATEGORIES, 'code', 'label')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Model Number <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="appr-model-code">
+          ${optionsHtml(MODEL_NUMBERS, 'code', 'label')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Group Number <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="appr-group-number">${groupOpts}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Machining / Assembly Status <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="appr-machining-status">
+          ${optionsHtml(MACHINING_STATUS, 'code', 'label')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Revision Letter <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="appr-revision-letter">
+          ${REVISION_LETTERS.map(l => `<option value="${l}">${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Development Status <span style="color:#DC2626">*</span></label>
+        <select class="form-select" id="appr-dev-status">
+          ${optionsHtml(DEV_STATUS, 'code', 'label')}
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1 / -1">
+        <label class="form-label">BOM Number Preview</label>
+        <input class="form-input" id="appr-number-preview" readonly style="font-family:var(--font-mono);font-weight:700;letter-spacing:1px;background:var(--bg-muted)" />
+      </div>
+      <div class="form-group" style="grid-column:1 / -1">
+        <label class="form-label">Name <span style="color:#DC2626">*</span></label>
+        <input class="form-input" id="appr-name" value="${req.name || ''}" />
+      </div>
+      <div class="form-group" style="grid-column:1 / -1">
+        <label class="form-label">Description</label>
+        <input class="form-input" id="appr-desc" value="${req.description || ''}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Make / Buy</label>
+        <select class="form-select" id="appr-makebuy">
+          <option value="0">Make</option>
+          <option value="1">Buy</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Weight (kg)</label>
+        <input class="form-input" type="number" id="appr-weight" value="0" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unit of Measure</label>
+        <input class="form-input" id="appr-uom" value="Each" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <input class="form-input" type="number" id="appr-qty" value="1" />
+      </div>
+    </div>`,
+    `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+     <button class="btn btn-primary" id="save-appr-part">Approve & Fulfill</button>`
+  );
+
+  const catEl = document.getElementById('appr-cat-code');
+  const modelEl = document.getElementById('appr-model-code');
+  const groupEl = document.getElementById('appr-group-number');
+  const machEl = document.getElementById('appr-machining-status');
+  const revEl = document.getElementById('appr-revision-letter');
+  const devEl = document.getElementById('appr-dev-status');
+  const previewEl = document.getElementById('appr-number-preview');
+
+  const syncPreview = async () => {
+    if (!previewEl) return;
+    const [gc, sc] = String(groupEl?.value || '').split(':');
+    const serial = await getNextSerial({
+      categoryCode: catEl?.value || '',
+      modelCode: modelEl?.value || '',
+      groupCode: gc || '',
+      subCode: sc || '',
+    });
+    previewEl.value = buildPartNumber({
+      categoryCode: catEl?.value || '',
+      modelCode: modelEl?.value || '',
+      groupCode: gc || '',
+      subCode: sc || '',
+      serial,
+      machiningCode: machEl?.value || '0',
+      revisionLetter: revEl?.value || 'A',
+      devStatusCode: devEl?.value || 'X',
+    });
+  };
+
+  [catEl, modelEl, groupEl, machEl, revEl, devEl].forEach(el => el?.addEventListener('change', syncPreview));
+  syncPreview();
+
+  document.getElementById('save-appr-part')?.addEventListener('click', async () => {
+    const [groupCode, subGroupCode] = String(groupEl?.value || '').split(':');
+
+    // Fallback if preview value is empty/invalid
+    let serialNumber = '001';
+    if (previewEl.value && previewEl.value.length >= 7) {
+      serialNumber = previewEl.value.slice(4, 7);
+    }
+
+    const payload = {
+      groupCode,
+      subGroupCode,
+      serialNumber,
+      machiningCode: machEl?.value?.trim() || "0",
+      revisionLetter: revEl?.value?.trim() || "A",
+      devStatusCode: devEl?.value?.trim() || "X",
+      revisionDigits: "00",
+      name: document.getElementById('appr-name')?.value?.trim() || req.name,
+      description: document.getElementById('appr-desc')?.value?.trim() || req.description,
+      makeBuy: parseInt(document.getElementById('appr-makebuy')?.value || "0", 10),
+      releaseFlag: 0,
+      eeRelease: 0,
+      weight: parseFloat(document.getElementById('appr-weight')?.value || "0"),
+      unitOfMeasure: document.getElementById('appr-uom')?.value?.trim() || "Each",
+      gstCode: "",
+      quantity: parseInt(document.getElementById('appr-qty')?.value || "1", 10),
+      homologationStatus: 0
+    };
+
+    try {
+      const res = await authFetch(`/api/PartRequests/${req.id}/fulfill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showToast('Part request approved and fulfilled successfully.', 'success');
+        document.querySelector('.modal-overlay')?.remove();
+        renderPendingParts(tc);
+      } else {
+        showToast('Failed to fulfill part request.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error fulfilling: ' + err.message, 'error');
+    }
+  });
 }
 
 // ─── Create BOM Modal ────────────────────────────────────────
@@ -1696,40 +1854,7 @@ async function renderCreatePart(tc) {
             <label class="form-label">Homologation Required</label>
             <select class="form-select" id="cp-homo"><option value="0">No</option><option value="1">Yes</option></select>
           </div>
-          <div class="form-group">
-            <label class="form-label">Target BOM ID (Optional)</label>
-            <input class="form-input" id="cp-bom-ref" type="number" placeholder="Enter BOM ID to link to" />
-            <div class="text-xs text-secondary" style="margin-top:4px">If entered, the new part will be added to this BOM.</div>
-          </div>
-          <div class="form-group" id="supplier-select-wrapper">
-            <label class="form-label">Supplier Name</label>
-            <select class="form-select" id="cp-supplier">
-              <option value="na">Not Applicable</option>
-              <option value="manual">Enter Manually</option>
-            </select>
-          </div>
-          <div class="form-group" id="supplier-name-group" style="display:none">
-            <label class="form-label">Supplier Name <span style="color:#DC2626">*</span></label>
-            <input class="form-input" id="supplier-name-input" placeholder="Enter supplier company name" />
-          </div>
-          <div class="form-group" id="supplier-email-group" style="display:none">
-            <label class="form-label">Supplier Email <span style="color:#DC2626">*</span></label>
-            <input class="form-input" type="email" id="supplier-email-input" placeholder="supplier@company.com" />
-          </div>
-          <div class="form-group" id="send-email-group" style="display:none">
-            <label class="form-label">Send Notification Email?</label>
-            <select class="form-select" id="send-email-select">
-              <option value="">Select…</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </div>
-          <div class="form-group" id="supplier-checkbox-group" style="display:none">
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.857rem;cursor:pointer">
-              <input type="checkbox" id="supplier-confirm-checkbox" style="accent-color:var(--brand-primary)" />
-              Confirm supplier details are correct
-            </label>
-          </div>
+
         </div>
 
         <div class="form-group" style="margin-top:8px">
@@ -1815,67 +1940,7 @@ async function renderCreatePart(tc) {
     e.target.value = e.target.value.toUpperCase();
   });
 
-  // Supplier cascade
-  const supplierSelect = tc.querySelector('#cp-supplier');
-  const nameGroup = tc.querySelector('#supplier-name-group');
-  const nameInput = tc.querySelector('#supplier-name-input');
-  const emailGroup = tc.querySelector('#supplier-email-group');
-  const emailInput = tc.querySelector('#supplier-email-input');
-  const sendGroup = tc.querySelector('#send-email-group');
-  const sendSelect = tc.querySelector('#send-email-select');
-  const confirmGroup = tc.querySelector('#supplier-checkbox-group');
 
-  supplierSelect?.addEventListener('change', e => {
-    const isManual = e.target.value === 'manual';
-    nameGroup.style.display = isManual ? 'block' : 'none';
-    emailGroup.style.display = 'none';
-    sendGroup.style.display = 'none';
-    confirmGroup.style.display = 'none';
-    if (nameInput) nameInput.value = '';
-    if (emailInput) emailInput.value = '';
-    if (sendSelect) sendSelect.value = '';
-  });
-
-  nameInput?.addEventListener('input', e => {
-    emailGroup.style.display = e.target.value.trim() ? 'block' : 'none';
-    if (!e.target.value.trim()) { sendGroup.style.display = 'none'; confirmGroup.style.display = 'none'; }
-  });
-
-  emailInput?.addEventListener('input', e => {
-    sendGroup.style.display = e.target.value.trim() ? 'block' : 'none';
-    if (!e.target.value.trim()) confirmGroup.style.display = 'none';
-  });
-
-  sendSelect?.addEventListener('change', e => {
-    confirmGroup.style.display = e.target.value ? 'block' : 'none';
-  });
-
-  const makebuySelect = tc.querySelector('#cp-makebuy');
-  const supplierWrapper = tc.querySelector('#supplier-select-wrapper');
-
-  makebuySelect?.addEventListener('change', e => {
-    // Both FSS(0) and BTP(2) require a supplier, so always show it unless it's Make (1)? 
-    // Actually the user says "only shows when Make/Buy is FSS or Make In House" earlier, 
-    // but now says "supplier needed in FSS and BTP". I'll just always show it and enforce validation.
-    if (supplierWrapper) supplierWrapper.style.display = 'block';
-  });
-  makebuySelect?.dispatchEvent(new Event('change'));
-
-  // Fetch and populate existing suppliers
-  if (supplierSelect) {
-    fetchSuppliers().then(suppliers => {
-      const data = Array.isArray(suppliers) ? suppliers : (suppliers?.items || []);
-      const manualOption = supplierSelect.querySelector('option[value="manual"]');
-      data.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = 'existing_' + s.id;
-        opt.dataset.name = s.name;
-        opt.dataset.email = s.email;
-        opt.textContent = s.name;
-        supplierSelect.insertBefore(opt, manualOption);
-      });
-    }).catch(e => console.warn('Supplier fetch failed', e));
-  }
 
   tc.querySelector('#cp-save-draft')?.addEventListener('click', () => {
     showToast('Part saved as draft. Continue editing.', 'info');
@@ -1896,76 +1961,45 @@ async function renderCreatePart(tc) {
     if (!categoryCode || !modelCode || !groupCode || !subGroupCode) return showToast('Category, model, and group are required.', 'error');
     if (releaseFlagStr === '' || releaseFlagStr === undefined || releaseFlagStr === null) return showToast('Release Flag is required.', 'error');
 
-    const makeBuyVal = Number(tc.querySelector('#cp-makebuy')?.value || 0);
-    const supplierMode = supplierSelect?.value || 'na';
-    let supplierName = "";
-    let supplierEmail = "";
-
-    if (supplierMode.startsWith('existing_')) {
-      const selectedOpt = supplierSelect.options[supplierSelect.selectedIndex];
-      supplierName = selectedOpt.dataset.name;
-      supplierEmail = selectedOpt.dataset.email;
-    } else if (supplierMode === 'manual') {
-      supplierName = nameInput?.value?.trim() || "";
-      supplierEmail = emailInput?.value?.trim() || "";
-    }
-
-    if (makeBuyVal === 0 || makeBuyVal === 2) {
-      // FSS (0) or BTP (2)
-      if (supplierMode === 'na' || !supplierName || !supplierEmail) {
-        return showToast('Supplier is required for FSS and BTP.', 'error');
-      }
-      if (supplierMode === 'manual' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supplierEmail)) {
-        return showToast('Enter a valid supplier email.', 'error');
-      }
-    } else {
-      // Make in house (1)
-      if (supplierMode === 'manual' && supplierEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supplierEmail)) {
-        return showToast('Enter a valid supplier email.', 'error');
-      }
-    }
-
     const serial = await getNextSerial({ categoryCode, modelCode, groupCode, subCode: subGroupCode });
     const generatedPartNumber = buildPartNumber({ categoryCode, modelCode, groupCode, subCode: subGroupCode, serial, machiningCode, revisionLetter, devStatusCode });
 
-    const targetBomId = tc.querySelector('#cp-bom-ref')?.value?.trim();
     const payload = {
-      bomId: targetBomId ? parseInt(targetBomId, 10) : 0,
-      categoryCode,            // "s"
-      modelCode,               // "st"
-      groupCode,               // "s"
-      subGroupCode,            // "s"
-      serialNumber: serial,    // "str"
-      machiningCode,           // "s"
-      revisionLetter,          // "s"
-      devStatusCode,           // "s"
-      revisionDigits: "00",    // "st"
+      bomId: 0,
+      categoryCode,
+      modelCode,
+      groupCode,
+      subGroupCode,
+      serialNumber: serial,
+      machiningCode,
+      revisionLetter,
+      devStatusCode,
+      revisionDigits: "00",
       name,
       description: tc.querySelector('#cp-desc')?.value?.trim() || '',
       makeBuy: Number(tc.querySelector('#cp-makebuy')?.value || 0),
+      releaseFlag: Number(releaseFlagStr),
+      eeRelease: Number(tc.querySelector('#cp-ee-release')?.value || 0),
       weight: Number(tc.querySelector('#cp-weight')?.value || 0),
       unitOfMeasure: unitOfMeasure || 'Each',
       gstCode: tc.querySelector('#cp-gstcode')?.value?.trim() || '',
-      supplierName,
-      supplierEmail,
       quantity: Number(tc.querySelector('#cp-quantity')?.value || 1),
-      releaseFlag: Number(releaseFlagStr),
-      eeRelease: Number(tc.querySelector('#cp-ee-release')?.value || 0),
-      homologationStatus: Number(tc.querySelector('#cp-homo')?.value || 0)
+      homologationStatus: Number(tc.querySelector('#cp-homo')?.value || 0),
+      assignedToDesignerUserId: 0
     };
 
     const submitBtn = tc.querySelector('#cp-submit');
     if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="material-icons-outlined" style="font-size:16px">autorenew</span>Creating…'; }
 
     try {
-      const resp = await createPart(payload);
+      const resp = await authFetch('/api/Parts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) throw new Error('Failed to create part');
 
-      const targetBomId = tc.querySelector('#cp-bom-ref')?.value?.trim();
-      if (targetBomId) {
-        showToast(`Part ${generatedPartNumber} created and linked to BOM ${targetBomId}!`, 'success');
-      } else {
-        showToast(`Part ${generatedPartNumber} created and submitted for review!`, 'success');
-      }
+      showToast(`Part ${generatedPartNumber} created and submitted for review!`, 'success');
       setTimeout(() => navigateTo('workflows'), 1500);
     } catch (err) {
       console.error('[PART CREATE] Error:', err);
