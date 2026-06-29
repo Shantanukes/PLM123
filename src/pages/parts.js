@@ -1858,8 +1858,10 @@ async function renderCreatePart(tc) {
             <select class="form-select" id="cp-homo"><option value="0">No</option><option value="1">Yes</option></select>
           </div>
           <div class="form-group">
-            <label class="form-label">Assigned Designer ID <span style="color:#DC2626">*</span></label>
-            <input class="form-input" type="number" id="cp-designer" placeholder="Enter Designer ID" value="0" />
+            <label class="form-label">Assigned Designer <span style="color:#DC2626">*</span></label>
+            <select class="form-select" id="cp-designer">
+              <option value="">Select Designer</option>
+            </select>
           </div>
         </div>
 
@@ -1947,6 +1949,23 @@ async function renderCreatePart(tc) {
   });
 
 
+
+  // Fetch Designers from /api/Parts/designers
+  const loadDesigners = async () => {
+    try {
+      const res = await authFetch('/api/Parts/designers');
+      if (res.ok) {
+        const designers = await res.json();
+        const designerSelect = tc.querySelector('#cp-designer');
+        if (designerSelect) {
+          designerSelect.innerHTML = '<option value="">Select Designer</option>' + designers.map(d => `<option value="${d.id}">${d.fullName || d.name || ''}</option>`).join('');
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load designers for Create Part', err);
+    }
+  };
+  loadDesigners();
 
   tc.querySelector('#cp-save-draft')?.addEventListener('click', () => {
     showToast('Part saved as draft. Continue editing.', 'info');
