@@ -1,4 +1,4 @@
-import { showToast, showModal, navigateTo } from '../main.js';
+import { showToast, showModal, navigateTo, getCurrentUserRole } from '../main.js';
 import { authFetch } from '../api/client.js';
 import { createPart, getParts, getPartById, getPartByNumber, updatePart, revisePart, deletePart, fetchSuppliers } from '../api/parts.js';
 import { createBom, getBomTree, updateBomLine, deleteBomLine, getBomLines, getBomWhereUsed, getBoms, getBomParts, getBomById, getAllBomsWithParts, addBomLine } from '../api/bom.js';
@@ -241,6 +241,9 @@ function createPartRecordFromBom({ bomNumber, description, type, qty, unit, weig
 
 // ─── Main render ─────────────────────────────────────────────
 export function renderParts(container) {
+  const role = (getCurrentUserRole() || '').toLowerCase();
+  const isProjectManager = role.replace(/\s/g, '') === 'projectmanager';
+
   container.innerHTML = `
     <div class="page-header">
       <div class="page-title-group">
@@ -248,16 +251,23 @@ export function renderParts(container) {
         <p>Manage part master records across all product lines.</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-primary btn-sm" id="btn-new-part">
+        <!-- <button class="btn btn-primary btn-sm" id="btn-new-part">
           <span class="material-icons-outlined" style="font-size:16px">add</span>Create Part
+        </button> -->
+        ${role === 'designer' ? `
+        <button class="btn btn-primary btn-sm" id="btn-request-part">
+          <span class="material-icons-outlined" style="font-size:16px">add</span>Request Part
         </button>
+        ` : ''}
       </div>
     </div>
 
     <div class="tabs" id="part-tabs">
       <button class="tab-btn active" data-tab="part-search">Part Search</button>
       <button class="tab-btn" data-tab="part-revision">Part Revision</button>
-      <button class="tab-btn" data-tab="create-part">Create Part</button>
+      ${isProjectManager ? `<button class="tab-btn" data-tab="part-requests">Part Requests</button>` : ''}
+      ${isProjectManager ? `<button class="tab-btn" data-tab="pending-parts">Pending Parts</button>` : ''}
+      <!-- <button class="tab-btn" data-tab="create-part">Create Part</button> -->
     </div>
 
     <div id="tab-content"></div>
@@ -274,16 +284,229 @@ export function renderParts(container) {
 
   renderTabContent(container.querySelector('#tab-content'), 'part-search');
 
-  container.querySelector('#btn-new-part')?.addEventListener('click', () => {
-    container.querySelectorAll('#part-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'create-part'));
-    renderTabContent(container.querySelector('#tab-content'), 'create-part');
-  });
+  // container.querySelector('#btn-new-part')?.addEventListener('click', () => {
+  //   container.querySelectorAll('#part-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'create-part'));
+  //   renderTabContent(container.querySelector('#tab-content'), 'create-part');
+  // });
+
+  if (role === 'designer') {
+    container.querySelector('#btn-request-part')?.addEventListener('click', () => {
+      showModal(
+        'Request New Part',
+        `<div class="form-group">
+           <label class="form-label">BOM ID <span style="color:#DC2626">*</span></label>
+           <input class="form-input" type="number" id="req-part-bomid" placeholder="Enter BOM ID for reference" />
+         </div>
+         <div class="form-group">
+           <label class="form-label">Name <span style="color:#DC2626">*</span></label>
+           <input class="form-input" id="req-part-name" placeholder="Enter part name" />
+         </div>
+         <div class="form-group">
+           <label class="form-label">Description <span style="color:#DC2626">*</span></label>
+           <input class="form-input" id="req-part-desc" placeholder="Enter part description" />
+         </div>`,
+        `<button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+         <button class="btn btn-primary" id="save-request-part">Submit Request</button>`
+      );
+
+      setTimeout(() => {
+        document.getElementById('save-request-part')?.addEventListener('click', async () => {
+          const bomIdStr = document.getElementById('req-part-bomid').value.trim();
+          const name = document.getElementById('req-part-name').value.trim();
+          const description = document.getElementById('req-part-desc').value.trim();
+          
+          if (!bomIdStr || !name || !description) return showToast('Please fill all mandatory fields.', 'error');
+          
+          const bomId = parseInt(bomIdStr, 10);
+          if (isNaN(bomId)) return showToast('BOM ID must be a valid number.', 'error');
+
+          try {
+            const res = await authFetch('/api/PartRequests', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bomId, name, description })
+            });
+            if (res.ok) {
+              showToast('Part request submitted successfully.', 'success');
+              document.querySelector('.modal-overlay')?.remove();
+            } else {
+              let errorText = '';
+              try { errorText = await res.text(); } catch(e) {}
+              console.error('Server error response:', errorText);
+              showToast('Failed to submit request. Server responded with: ' + res.status + ' ' + (errorText.substring(0, 50) || res.statusText), 'error');
+            }
+          } catch (e) {
+            showToast('Error submitting request: ' + e.message, 'error');
+          }
+        });
+      }, 50);
+    });
+  }
 }
 
 function renderTabContent(tc, tab) {
   if (tab === 'part-search') renderPartSearch(tc);
   else if (tab === 'part-revision') renderPartRevision(tc);
   else if (tab === 'create-part') renderCreatePart(tc);
+  else if (tab === 'part-requests') renderPartRequests(tc);
+  else if (tab === 'pending-parts') renderPendingParts(tc);
+}
+
+async function renderPartRequests(tc) {
+  tc.innerHTML = `<div style="padding: 24px; text-align: center;"><span class="material-icons-outlined spinner" style="font-size:32px; color:var(--brand-primary)">autorenew</span><p style="margin-top:12px; color:var(--text-secondary)">Loading part requests...</p></div>`;
+  try {
+    const res = await authFetch('/api/PartRequests');
+    if (!res.ok) throw new Error('Failed to fetch part requests');
+    const data = await res.json();
+    
+    if (!data || data.length === 0) {
+      tc.innerHTML = `<div class="empty-state"><span class="material-icons-outlined" style="font-size:48px; color:var(--text-tertiary)">inbox</span><p>No part requests found.</p></div>`;
+      return;
+    }
+
+    const rows = data.map(req => `
+      <tr>
+        <td class="part-number">${req.bomNumber || '-'}</td>
+        <td>${req.bomName || '-'}</td>
+        <td>${req.name || '-'}</td>
+        <td>${req.description || '-'}</td>
+        <td>${req.requestedByUserName || '-'}</td>
+        <td>${req.assignedToUserName || '-'}</td>
+        <td><span class="badge badge-${(req.status || 'draft').toLowerCase().replace(' ', '-')} badge-sm">${req.status || 'Pending'}</span></td>
+        <td>${new Date(req.createdAt).toLocaleDateString()}</td>
+      </tr>
+    `).join('');
+
+    tc.innerHTML = `
+      <div class="card" style="margin-top: 16px;">
+        <div class="card-header">
+          <div class="card-title">Part Requests Overview</div>
+        </div>
+        <div class="card-body no-pad" style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>BOM Number</th>
+                <th>BOM Name</th>
+                <th>Part Name</th>
+                <th>Description</th>
+                <th>Requested By</th>
+                <th>Assigned To</th>
+                <th>Status</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    console.error('Error fetching part requests:', err);
+    tc.innerHTML = `<div class="empty-state"><span class="material-icons-outlined" style="font-size:48px; color:#DC2626">error</span><p>Could not load part requests.</p><p style="font-size:12px;color:var(--text-tertiary)">${err.message}</p></div>`;
+  }
+}
+
+async function renderPendingParts(tc) {
+  tc.innerHTML = `<div style="padding: 24px; text-align: center;"><span class="material-icons-outlined spinner" style="font-size:32px; color:var(--brand-primary)">autorenew</span><p style="margin-top:12px; color:var(--text-secondary)">Loading pending parts...</p></div>`;
+  try {
+    const res = await authFetch('/api/PartRequests/pending');
+    if (!res.ok) throw new Error('Failed to fetch pending parts');
+    const data = await res.json();
+    
+    if (!data || data.length === 0) {
+      tc.innerHTML = `<div class="empty-state"><span class="material-icons-outlined" style="font-size:48px; color:var(--text-tertiary)">inbox</span><p>No pending parts found.</p></div>`;
+      return;
+    }
+
+    const rows = data.map(req => `
+      <tr>
+        <td class="part-number">${req.bomNumber || '-'}</td>
+        <td>${req.bomName || '-'}</td>
+        <td>${req.name || '-'}</td>
+        <td>${req.description || '-'}</td>
+        <td>${req.requestedByUserName || '-'}</td>
+        <td>${new Date(req.createdAt).toLocaleDateString()}</td>
+        <td>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-xs btn-approve-part" data-id="${req.id}" title="Approve/Create">
+              <span class="material-icons-outlined" style="font-size:16px">check_circle</span>
+            </button>
+            <button class="btn btn-outline btn-xs btn-reject-part" data-id="${req.id}" title="Reject" style="color:#DC2626;border-color:#DC2626;">
+              <span class="material-icons-outlined" style="font-size:16px">cancel</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    tc.innerHTML = `
+      <div class="card" style="margin-top: 16px;">
+        <div class="card-header">
+          <div class="card-title">Pending Parts Action Queue</div>
+        </div>
+        <div class="card-body no-pad" style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>BOM Number</th>
+                <th>BOM Name</th>
+                <th>Part Name</th>
+                <th>Description</th>
+                <th>Requested By</th>
+                <th>Created At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    tc.querySelectorAll('.btn-approve-part').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        try {
+          // You may need to change 'POST' or the endpoint depending on the backend implementation
+          const res = await authFetch(`/api/PartRequests/${id}/approve`, { method: 'POST' });
+          if (res.ok) {
+            showToast('Part request approved/created successfully.', 'success');
+            renderPendingParts(tc);
+          } else {
+            showToast('Failed to approve part request.', 'error');
+          }
+        } catch(err) {
+          showToast('Error approving: ' + err.message, 'error');
+        }
+      });
+    });
+
+    tc.querySelectorAll('.btn-reject-part').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        try {
+           // You may need to change 'POST' or the endpoint depending on the backend implementation
+          const res = await authFetch(`/api/PartRequests/${id}/reject`, { method: 'POST' });
+          if (res.ok) {
+            showToast('Part request rejected successfully.', 'success');
+            renderPendingParts(tc);
+          } else {
+            showToast('Failed to reject part request.', 'error');
+          }
+        } catch(err) {
+          showToast('Error rejecting: ' + err.message, 'error');
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Error fetching pending parts:', err);
+    tc.innerHTML = `<div class="empty-state"><span class="material-icons-outlined" style="font-size:48px; color:#DC2626">error</span><p>Could not load pending parts.</p><p style="font-size:12px;color:var(--text-tertiary)">${err.message}</p></div>`;
+  }
 }
 
 // ─── Create BOM Modal ────────────────────────────────────────
